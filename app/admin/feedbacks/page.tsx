@@ -13,6 +13,7 @@ import {
   Search,
   Star,
   Trash2,
+  RefreshCcw,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -22,6 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useFeedback } from "@/contexts/feedback-context"
 import {
   FeedbackType,
@@ -133,62 +135,91 @@ export default function FeedbacksPage() {
   }
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Feedbacks</h1>
-          <p className="text-muted-foreground">Gerencie todos os feedbacks dos clientes.</p>
+    <div className="flex flex-col gap-6">
+      {/* Header with gradient background */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-pink-600 via-pink-700 to-rose-800 p-6 text-white">
+        <div className="absolute inset-0 bg-black/10" />
+        <div className="relative flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Feedbacks</h1>
+            <p className="text-pink-100">Gerencie todos os feedbacks dos clientes</p>
+          </div>
+          <Button asChild className="bg-white text-pink-700 hover:bg-pink-50">
+            <div onClick={() => router.push("/admin/feedbacks/create")}>
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Feedback
+            </div>
+          </Button>
         </div>
-        <Button className="bg-[#df0e67] hover:bg-[#df0e67]/90" onClick={() => router.push("/admin/feedbacks/create")}>
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Feedback
-        </Button>
       </div>
 
-      {/* Estatísticas */}
+      {/* Stats Cards */}
       {state.stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total</CardTitle>
-              <MessageSquare className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{state.stats.totalFeedbacks}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
-              <AlertCircle className="h-4 w-4 text-yellow-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{state.stats.pendingFeedbacks}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Resolvidos</CardTitle>
-              <MessageSquare className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{state.stats.resolvedFeedbacks}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Avaliação Média</CardTitle>
-              <Star className="h-4 w-4 text-yellow-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{state.stats.averageRating.toFixed(1)}</div>
-            </CardContent>
-          </Card>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white">
+            <div className="absolute inset-0 bg-black/10" />
+            <div className="relative">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-blue-100 text-sm font-medium">Total</p>
+                  <p className="text-2xl font-bold">{state.stats.totalFeedbacks}</p>
+                </div>
+                <div className="rounded-full bg-white/20 p-3">
+                  <MessageSquare className="h-6 w-6" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-yellow-500 to-yellow-600 p-6 text-white">
+            <div className="absolute inset-0 bg-black/10" />
+            <div className="relative">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-yellow-100 text-sm font-medium">Pendentes</p>
+                  <p className="text-2xl font-bold">{state.stats.pendingFeedbacks}</p>
+                </div>
+                <div className="rounded-full bg-white/20 p-3">
+                  <AlertCircle className="h-6 w-6" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-green-500 to-green-600 p-6 text-white">
+            <div className="absolute inset-0 bg-black/10" />
+            <div className="relative">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-green-100 text-sm font-medium">Resolvidos</p>
+                  <p className="text-2xl font-bold">{state.stats.resolvedFeedbacks}</p>
+                </div>
+                <div className="rounded-full bg-white/20 p-3">
+                  <MessageSquare className="h-6 w-6" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 p-6 text-white">
+            <div className="absolute inset-0 bg-black/10" />
+            <div className="relative">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-purple-100 text-sm font-medium">Avaliação Média</p>
+                  <p className="text-2xl font-bold">{state.stats.averageRating.toFixed(1)}</p>
+                </div>
+                <div className="rounded-full bg-white/20 p-3">
+                  <Star className="h-6 w-6" />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Filtros */}
-      <Card>
+      {/* Filters */}
+      <Card className="border-none shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Filter className="h-5 w-5" />
@@ -196,11 +227,11 @@ export default function FeedbacksPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="grid gap-4 md:grid-cols-6">
             <div className="space-y-2">
               <Label>Buscar</Label>
               <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar por título..."
                   value={searchTerm}
@@ -263,29 +294,35 @@ export default function FeedbacksPage() {
 
             <div className="space-y-2">
               <Label>&nbsp;</Label>
-              <div className="flex gap-2">
-                <Button onClick={handleFilter} className="flex-1">
-                  Filtrar
-                </Button>
-                <Button variant="outline" onClick={handleClearFilters}>
-                  Limpar
-                </Button>
-              </div>
+              <Button onClick={handleFilter} className="w-full">
+                Filtrar
+              </Button>
+            </div>
+
+            <div className="space-y-2">
+              <Label>&nbsp;</Label>
+              <Button variant="outline" onClick={handleClearFilters} className="w-full bg-transparent">
+                Limpar
+              </Button>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Tabela de Feedbacks */}
-      <Card>
-        <CardHeader>
+      <Card className="border-none shadow-lg">
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Lista de Feedbacks</CardTitle>
+          <Button variant="outline" onClick={() => fetchFeedbacks()} disabled={state.loading.feedbacks}>
+            <RefreshCcw className={`mr-2 h-4 w-4 ${state.loading.feedbacks ? "animate-spin" : ""}`} />
+            Atualizar
+          </Button>
         </CardHeader>
         <CardContent>
           {state.loading.feedbacks ? (
             <div className="flex items-center justify-center py-8">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#df0e67] mx-auto"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-600 mx-auto"></div>
                 <p className="mt-2 text-muted-foreground">Carregando feedbacks...</p>
               </div>
             </div>
@@ -343,21 +380,37 @@ export default function FeedbacksPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => router.push(`/admin/feedbacks/${feedback.id}`)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(feedback.id)}
-                            disabled={state.loading.deleting}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => router.push(`/admin/feedbacks/${feedback.id}`)}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Ver feedback</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDelete(feedback.id)}
+                                  disabled={state.loading.deleting}
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Excluir feedback</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </div>
                       </TableCell>
                     </TableRow>

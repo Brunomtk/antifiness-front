@@ -25,31 +25,77 @@ export default function WorkoutStatsCards({ empresaId, clientId }: { empresaId?:
 
   if (loading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {Array.from({ length: 6 }).map((_, i) => (<Skeleton key={i} className="h-24 w-full" />))}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-24 w-full" />
+        ))}
       </div>
     )
   }
 
   const items = [
-    { key: "totalWorkouts", label: "Treinos", val: s.totalWorkouts ?? 0, icon: Dumbbell },
-    { key: "completedWorkouts", label: "Concluídos", val: s.completedWorkouts ?? 0, icon: CheckSquare },
-    { key: "templateWorkouts", label: "Modelos", val: s.templateWorkouts ?? 0, icon: FilePlus },
-    { key: "totalExercises", label: "Exercícios", val: s.totalExercises ?? 0, icon: Layers },
-    { key: "averageRating", label: "Avaliação", val: s.averageRating ?? 0, icon: Star },
-    { key: "completionRate", label: "Conclusão", val: (s.completionRate ?? 0), icon: Flame, suffix: "%" },
+    {
+      key: "totalWorkouts",
+      label: "Total de Treinos",
+      val: s.totalWorkouts ?? 0,
+      icon: Dumbbell,
+      gradient: "from-blue-500 to-blue-600",
+    },
+    {
+      key: "completedWorkouts",
+      label: "Treinos Concluídos",
+      val: s.completedWorkouts ?? 0,
+      icon: CheckSquare,
+      gradient: "from-green-500 to-green-600",
+    },
+    {
+      key: "templateWorkouts",
+      label: "Modelos de Treino",
+      val: s.templateWorkouts ?? 0,
+      icon: FilePlus,
+      gradient: "from-purple-500 to-purple-600",
+    },
+    {
+      key: "totalExercises",
+      label: "Total de Exercícios",
+      val: s.totalExercises ?? 0,
+      icon: Layers,
+      gradient: "from-indigo-500 to-indigo-600",
+    },
+    {
+      key: "averageRating",
+      label: "Avaliação Média",
+      val: s.averageRating ?? 0,
+      icon: Star,
+      gradient: "from-yellow-500 to-yellow-600",
+    },
+    {
+      key: "completionRate",
+      label: "Taxa de Conclusão",
+      val: s.completionRate ?? 0,
+      icon: Flame,
+      suffix: "%",
+      gradient: "from-orange-500 to-orange-600",
+    },
   ]
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {items.map(({ key, label, val, icon: Icon, suffix }) => (
-        <Card key={key} className="shadow-sm border-none bg-gradient-to-b from-muted/30 to-background hover:from-muted/40">
-          <CardContent className="py-4">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+      {items.map(({ key, label, val, icon: Icon, suffix, gradient }) => (
+        <Card key={key} className="overflow-hidden border-0 shadow-lg">
+          <CardContent className={`p-4 bg-gradient-to-br ${gradient} text-white relative`}>
             <div className="flex items-center justify-between">
-              <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
-              <Icon className="h-4 w-4 opacity-60" />
+              <div>
+                <p className="text-white/80 text-xs font-medium uppercase tracking-wide">{label}</p>
+                <p className="text-2xl font-bold mt-1">
+                  {val}
+                  {suffix && <span className="text-lg ml-1">{suffix}</span>}
+                </p>
+              </div>
+              <div className="bg-white/20 rounded-full p-2">
+                <Icon className="h-5 w-5 text-white" />
+              </div>
             </div>
-            <div className="mt-1 text-2xl font-semibold">{val}{suffix ? <span className="text-base ml-1">{suffix}</span> : null}</div>
           </CardContent>
         </Card>
       ))}

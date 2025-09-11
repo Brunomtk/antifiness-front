@@ -7,7 +7,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Textarea } from "@/components/ui/textarea"
 import { Send, Paperclip, ImageIcon, CheckCheck } from "lucide-react"
 import { useMobile } from "@/hooks/use-mobile"
-import NotificationDropdown from "@/components/notification-dropdown"
 import { useConversations, useMessages } from "@/hooks/use-message"
 import { MessageType, MessageStatus } from "@/types/message"
 import { format } from "date-fns"
@@ -104,7 +103,6 @@ export default function ClientMessages() {
                 Comunique-se diretamente com seu nutricionista para tirar dúvidas e receber orientações.
               </p>
             </div>
-            {!isMobile && <NotificationDropdown />}
           </div>
           <Card className="border-none shadow-sm">
             <CardContent className="flex items-center justify-center h-64">
@@ -132,7 +130,6 @@ export default function ClientMessages() {
               Comunique-se diretamente com seu nutricionista para tirar dúvidas e receber orientações.
             </p>
           </div>
-          {!isMobile && <NotificationDropdown />}
         </div>
 
         <Card className="border-none shadow-sm">

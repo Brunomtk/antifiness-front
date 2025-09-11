@@ -457,3 +457,5 @@ export function useCourseStats() {
     fetchCourseStats,
   }
 }
+
+export const useCourse = useCourses

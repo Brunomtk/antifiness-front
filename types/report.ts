@@ -1,7 +1,7 @@
 export interface Report {
   id: string
   title: string
-  type: "progress" | "nutrition" | "workout" | "general"
+  type: ReportType
   clientId: string
   clientName: string
   nutritionistId: string
@@ -10,7 +10,7 @@ export interface Report {
     end: Date
   }
   data: ReportData
-  status: "draft" | "completed" | "sent"
+  status: ReportStatus
   createdAt: Date
   updatedAt: Date
   recipients: string[]
@@ -80,9 +80,9 @@ export interface ReportInsight {
 }
 
 export interface ReportFilters {
-  type?: "progress" | "nutrition" | "workout" | "general"
+  type?: ReportType
   clientId?: string
-  status?: "draft" | "completed" | "sent"
+  status?: ReportStatus
   dateFrom?: Date
   dateTo?: Date
 }
@@ -102,7 +102,7 @@ export interface ReportSchedule {
 export interface ReportTemplate {
   id: string
   name: string
-  type: "progress" | "nutrition" | "workout" | "general"
+  type: ReportType
   description: string
   structure: {
     sections: string[]
@@ -136,7 +136,7 @@ export interface ReportStats {
 
 export interface CreateReportData {
   title: string
-  type: "progress" | "nutrition" | "workout" | "general"
+  type: ReportType
   clientId: string
   period: {
     start: Date
@@ -148,7 +148,7 @@ export interface CreateReportData {
 export interface UpdateReportData {
   title?: string
   data?: Partial<ReportData>
-  status?: "draft" | "completed" | "sent"
+  status?: ReportStatus
 }
 
 export enum InsightType {
@@ -172,4 +172,17 @@ export enum ScheduleFrequency {
   MONTHLY = "monthly",
   QUARTERLY = "quarterly",
   YEARLY = "yearly",
+}
+
+export enum ReportStatus {
+  DRAFT = "draft",
+  COMPLETED = "completed",
+  SENT = "sent",
+}
+
+export enum ReportType {
+  PROGRESS = "progress",
+  NUTRITION = "nutrition",
+  WORKOUT = "workout",
+  GENERAL = "general",
 }

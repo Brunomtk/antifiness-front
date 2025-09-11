@@ -1,43 +1,9 @@
-# --- Antifitness static export / PWA config ---
-
-# Serve precompressed if available (optional; requires server config)
-# AddEncoding br .br
-# AddEncoding gzip .gz
-
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
-
-  # Avoid content negotiation oddities
-  Options -MultiViews
-
-  # Serve existing files/directories
-  RewriteCond %{REQUEST_FILENAME} -f [OR]
-  RewriteCond %{REQUEST_FILENAME} -d
-  RewriteRule ^ - [L]
-
-  # SPA fallback (Next export): route everything else to index.html
-  RewriteRule ^ index.html [L]
-</IfModule>
-
-# Cache headers
-<IfModule mod_expires.c>
-  ExpiresActive On
-  ExpiresDefault "access plus 1h"
-  ExpiresByType text/css "access plus 7 days"
-  ExpiresByType application/javascript "access plus 7 days"
-  ExpiresByType application/json "access plus 1 hour"
-  ExpiresByType image/avif "access plus 30 days"
-  ExpiresByType image/webp "access plus 30 days"
-  ExpiresByType image/png "access plus 30 days"
-  ExpiresByType image/jpeg "access plus 30 days"
-  ExpiresByType image/svg+xml "access plus 30 days"
-</IfModule>
-
-# Service worker permissions and caching
-<IfModule mod_headers.c>
-  <FilesMatch "^(sw\\.js|service-worker\\.js|workbox-.*\\.js)$">
-    Header set Service-Worker-Allowed "/"
-    Header set Cache-Control "no-cache, no-store, must-revalidate"
-  </FilesMatch>
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME} !-l
+  RewriteRule . /index.html [L]
 </IfModule>

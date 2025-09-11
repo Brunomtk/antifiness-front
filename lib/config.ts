@@ -1,6 +1,6 @@
 export const config = {
   api: {
-    baseUrl: process.env.NEXT_PUBLIC_API_URL || "https://localhost:44394/api",
+    baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://68.183.154.14:5000/api",
     timeout: 10000,
   },
   upload: {

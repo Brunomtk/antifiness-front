@@ -30,6 +30,23 @@ export enum KanbanStage {
   COMPLETED = 4,
 }
 
+export function getKanbanStageLabel(stage: KanbanStage | number): string {
+  switch (stage) {
+    case KanbanStage.LEAD:
+      return "Lead"
+    case KanbanStage.PROSPECT:
+      return "Prospect"
+    case KanbanStage.ACTIVE:
+      return "Ativo"
+    case KanbanStage.INACTIVE:
+      return "Inativo"
+    case KanbanStage.COMPLETED:
+      return "Concluído"
+    default:
+      return "Desconhecido"
+  }
+}
+
 export enum Priority {
   LOW = 0,
   MEDIUM = 1,
@@ -53,9 +70,6 @@ export type PagedResult<T> = {
   hasNextPage?: boolean
 }
 
-export type ClientStatus = number // 0=Lead,1=Ativo,2=Inativo,3=Bloqueado ...
-export type KanbanStage = number  // 0=Novo,1=Contato,2=Avaliação,3=Plano,4=Atendimento ...
-export type ActivityLevel = number // 0..n conforme backend
 export type Gender = "Male" | "Female" | "Other"
 
 export type ClientBase = {
@@ -68,8 +82,8 @@ export type ClientBase = {
   height?: number
   currentWeight?: number
   targetWeight?: number
-  activityLevel?: ActivityLevel
-  kanbanStage?: KanbanStage
+  activityLevel?: number
+  kanbanStage?: number
   empresaId?: number
   notes?: string
 }
@@ -85,7 +99,7 @@ export type UpdateClientRequest = CreateClientRequest
 
 export type Client = ClientBase & {
   id: number
-  status?: ClientStatus
+  status?: number
   createdDate: string
   updatedDate: string
 }
@@ -112,7 +126,6 @@ export type ClientsQuery = {
   endDate?: string
 }
 
-
 export type WeightProgressRequest = { date: string; weight: number; notes?: string }
 export type MeasurementProgressRequest = {
   date: string
@@ -126,3 +139,36 @@ export type MeasurementProgressRequest = {
 }
 export type PhotoProgressRequest = { date: string; image: string; notes?: string }
 export type AchievementRequest = { title: string; description?: string; type?: string; category?: string }
+
+export interface ClientFilters {
+  page?: number
+  pageSize?: number
+  search?: string
+  status?: string | number
+  kanbanStage?: string | number
+  goalType?: string | number
+  activityLevel?: string | number
+  orderBy?: "name" | "createdDate" | "updatedDate"
+  orderDirection?: "asc" | "desc"
+  startDate?: string
+  endDate?: string
+}
+
+export interface ClientStats {
+  totalClients: number
+  activeClients: number
+  newClientsThisMonth: number
+  completedGoals: number
+  averageProgress: number
+  retentionRate: number
+}
+
+export interface ClientsResponse {
+  clients: Client[]
+  totalCount: number
+  pageNumber: number
+  pageSize: number
+  totalPages: number
+  hasPreviousPage: boolean
+  hasNextPage: boolean
+}

@@ -1,36 +1,13 @@
 {
-  "name": "Antifitness",
-  "short_name": "AntiFit",
+  "name": "Anti-Fitness - Sistema de Nutrição",
+  "short_name": "Anti-Fitness",
+  "description": "Sistema completo de gestão nutricional com acompanhamento personalizado",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0B0F19",
-  "theme_color": "#111827",
-  "description": "Antifitness — plataforma de nutrição e treinos com experiência PWA.",
-  "icons": [
-    {
-      "src": "/icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    },
-    {
-      "src": "/icons/maskable-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
-  ],
-  "lang": "pt-BR",
+  "background_color": "#ffffff",
+  "theme_color": "#df0e67",
+  "orientation": "portrait-primary",
   "scope": "/",
-  "orientation": "portrait",
-  "categories": [
-    "health",
-    "fitness",
-    "nutrition",
-    "productivity"
-  ]
+  "lang": "pt-BR",
+  "categories": ["health", "fitness", "nutrition", "lifestyle"]
 }

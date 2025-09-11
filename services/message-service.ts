@@ -22,33 +22,20 @@ import type {
   MessageFilters,
   TemplateFilters,
 } from "@/types/message"
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://localhost:44394/api"
+import { api } from "@/lib/api"
 
 class MessageService {
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`
+  private async request<T>(endpoint: string, options: any = {}): Promise<T> {
+    const { method = "GET", data, ...config } = options
 
-    const config: RequestInit = {
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
-      ...options,
-    }
+    const response = await api.request({
+      method,
+      url: endpoint,
+      data,
+      ...config,
+    })
 
-    const response = await fetch(url, config)
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
-    }
-
-    if (response.status === 204) {
-      return {} as T
-    }
-
-    return response.json()
+    return response.data
   }
 
   // Conversation methods
@@ -71,14 +58,14 @@ class MessageService {
   async createConversation(data: CreateConversationRequest): Promise<Conversation> {
     return this.request<Conversation>("/Conversation", {
       method: "POST",
-      body: JSON.stringify(data),
+      data: JSON.stringify(data),
     })
   }
 
   async updateConversation(id: number, data: UpdateConversationRequest): Promise<Conversation> {
     return this.request<Conversation>(`/Conversation/${id}`, {
       method: "PATCH",
-      body: JSON.stringify(data),
+      data: JSON.stringify(data),
     })
   }
 
@@ -91,7 +78,7 @@ class MessageService {
   async addParticipant(conversationId: number, data: AddParticipantRequest): Promise<void> {
     return this.request<void>(`/Conversation/${conversationId}/participants`, {
       method: "POST",
-      body: JSON.stringify(data),
+      data: JSON.stringify(data),
     })
   }
 
@@ -104,7 +91,7 @@ class MessageService {
   async updateParticipant(conversationId: number, userId: number, data: UpdateParticipantRequest): Promise<void> {
     return this.request<void>(`/Conversation/${conversationId}/participants/${userId}`, {
       method: "PATCH",
-      body: JSON.stringify(data),
+      data: JSON.stringify(data),
     })
   }
 
@@ -139,7 +126,7 @@ class MessageService {
   async markMessagesAsRead(conversationId: number, data: MarkMessagesReadRequest): Promise<void> {
     return this.request<void>(`/Conversation/${conversationId}/messages/read`, {
       method: "POST",
-      body: JSON.stringify(data),
+      data: JSON.stringify(data),
     })
   }
 
@@ -167,14 +154,14 @@ class MessageService {
   async sendMessage(data: CreateMessageRequest): Promise<Message> {
     return this.request<Message>("/Message", {
       method: "POST",
-      body: JSON.stringify(data),
+      data: JSON.stringify(data),
     })
   }
 
   async updateMessage(id: number, data: UpdateMessageRequest): Promise<Message> {
     return this.request<Message>(`/Message/${id}`, {
       method: "PATCH",
-      body: JSON.stringify(data),
+      data: JSON.stringify(data),
     })
   }
 
@@ -193,7 +180,7 @@ class MessageService {
   async addReaction(messageId: number, data: AddReactionRequest): Promise<void> {
     return this.request<void>(`/Message/${messageId}/reactions`, {
       method: "POST",
-      body: JSON.stringify(data),
+      data: JSON.stringify(data),
     })
   }
 
@@ -247,14 +234,14 @@ class MessageService {
   async createTemplate(data: CreateTemplateRequest): Promise<MessageTemplate> {
     return this.request<MessageTemplate>("/message-templates", {
       method: "POST",
-      body: JSON.stringify(data),
+      data: JSON.stringify(data),
     })
   }
 
   async updateTemplate(id: number, data: UpdateTemplateRequest): Promise<MessageTemplate> {
     return this.request<MessageTemplate>(`/message-templates/${id}`, {
       method: "PATCH",
-      body: JSON.stringify(data),
+      data: JSON.stringify(data),
     })
   }
 
@@ -267,7 +254,7 @@ class MessageService {
   async renderTemplate(id: number, data: RenderTemplateRequest): Promise<RenderTemplateResponse> {
     return this.request<RenderTemplateResponse>(`/message-templates/${id}/render`, {
       method: "POST",
-      body: JSON.stringify(data),
+      data: JSON.stringify(data),
     })
   }
 }

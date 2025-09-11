@@ -2,7 +2,14 @@
 
 import { api } from "@/lib/api"
 import type {
-  Workout, WorkoutsPage, WorkoutsQuery, CreateWorkoutRequest, UpdateWorkoutRequest, WorkoutStats, WorkoutProgress, CreateWorkoutProgressRequest
+  Workout,
+  WorkoutsPage,
+  WorkoutsQuery,
+  CreateWorkoutRequest,
+  UpdateWorkoutRequest,
+  WorkoutStats,
+  WorkoutProgress,
+  CreateWorkoutProgressRequest,
 } from "@/types/workout"
 
 const base = "/Workout"
@@ -44,12 +51,22 @@ class WorkoutService {
   }
 
   async create(payload: CreateWorkoutRequest): Promise<Workout> {
-    const { data } = await api.post<Workout>(base, payload, { headers: { "Content-Type": "application/json", Accept: "text/plain" } })
+    if (!validateWorkout(payload)) {
+      throw new Error("Invalid workout payload")
+    }
+    const { data } = await api.post<Workout>(base, payload, {
+      headers: { "Content-Type": "application/json", Accept: "text/plain" },
+    })
     return data
   }
 
   async update(id: number, payload: UpdateWorkoutRequest): Promise<Workout> {
-    const { data } = await api.put<Workout>(`${base}/${id}`, payload, { headers: { "Content-Type": "application/json", Accept: "text/plain" } })
+    if (!validateWorkout(payload)) {
+      throw new Error("Invalid workout payload")
+    }
+    const { data } = await api.put<Workout>(`${base}/${id}`, payload, {
+      headers: { "Content-Type": "application/json", Accept: "text/plain" },
+    })
     return data
   }
 
@@ -58,7 +75,11 @@ class WorkoutService {
   }
 
   async changeStatus(id: number, status: number): Promise<{ message?: string }> {
-    const { data } = await api.post(`${base}/${id}/status`, { status }, { headers: { "Content-Type": "application/json", Accept: "*/*" } })
+    const { data } = await api.post(
+      `${base}/${id}/status`,
+      { status },
+      { headers: { "Content-Type": "application/json", Accept: "*/*" } },
+    )
     return data as any
   }
 
@@ -83,7 +104,12 @@ class WorkoutService {
   }
 
   async instantiateTemplate(templateId: number, payload: CreateWorkoutRequest): Promise<Workout> {
-    const { data } = await api.post<Workout>(`${base}/templates/${templateId}/instantiate`, payload, { headers: { "Content-Type": "application/json", Accept: "text/plain" } })
+    if (!validateWorkout(payload)) {
+      throw new Error("Invalid workout payload")
+    }
+    const { data } = await api.post<Workout>(`${base}/templates/${templateId}/instantiate`, payload, {
+      headers: { "Content-Type": "application/json", Accept: "text/plain" },
+    })
     return data
   }
 
@@ -93,14 +119,29 @@ class WorkoutService {
   }
 
   async getProgress(workoutId: number): Promise<WorkoutProgress[]> {
-    const { data } = await api.get<WorkoutProgress[]>(`${base}/${workoutId}/progress`, { headers: { Accept: "text/plain" } })
+    const { data } = await api.get<WorkoutProgress[]>(`${base}/${workoutId}/progress`, {
+      headers: { Accept: "text/plain" },
+    })
     return data || []
   }
 
   async addProgress(workoutId: number, payload: CreateWorkoutProgressRequest): Promise<WorkoutProgress> {
-    const { data } = await api.post<WorkoutProgress>(`${base}/${workoutId}/progress`, payload, { headers: { "Content-Type": "application/json", Accept: "text/plain" } })
+    if (!validateWorkoutProgress(payload)) {
+      throw new Error("Invalid workout progress payload")
+    }
+    const { data } = await api.post<WorkoutProgress>(`${base}/${workoutId}/progress`, payload, {
+      headers: { "Content-Type": "application/json", Accept: "text/plain" },
+    })
     return data
   }
 }
 
 export const workoutService = new WorkoutService()
+
+export const validateWorkout = (workout: any): boolean => {
+  return !!(workout.name && workout.description && workout.exercises)
+}
+
+export const validateWorkoutProgress = (progress: any): boolean => {
+  return !!(progress.workoutId && progress.date && progress.exercises)
+}

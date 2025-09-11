@@ -638,3 +638,5 @@ export const KANBAN_STAGE_OPTIONS = [
   { value: KanbanStage.INACTIVE, label: "Inativo" },
   { value: KanbanStage.COMPLETED, label: "Concluído" },
 ]
+
+export const useClient = useClients

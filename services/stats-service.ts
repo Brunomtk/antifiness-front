@@ -8,36 +8,18 @@ import type {
   DashboardStats,
   StatsFilters,
 } from "@/types/stats"
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://localhost:44394/api"
+import { api } from "@/lib/api"
 
 class StatsService {
-  private getAuthHeaders() {
-    const token = localStorage.getItem("token")
-    return {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      accept: "text/plain",
-    }
-  }
-
   async getClientStats(filters?: StatsFilters): Promise<ClientStats> {
     const params = new URLSearchParams()
     if (filters?.empresaId) params.append("empresaId", filters.empresaId.toString())
     if (filters?.clientId) params.append("clientId", filters.clientId.toString())
 
-    const url = `${API_BASE_URL}/Client/stats${params.toString() ? `?${params.toString()}` : ""}`
+    const queryString = params.toString() ? `?${params.toString()}` : ""
 
-    const response = await fetch(url, {
-      method: "GET",
-      headers: this.getAuthHeaders(),
-    })
-
-    if (!response.ok) {
-      throw new Error(`Erro ao buscar estatísticas de clientes: ${response.statusText}`)
-    }
-
-    return response.json()
+    const response = await api.get(`/Client/stats${queryString}`)
+    return response.data
   }
 
   async getCourseStats(filters?: StatsFilters): Promise<CourseStats> {
@@ -45,18 +27,10 @@ class StatsService {
     if (filters?.empresaId) params.append("empresaId", filters.empresaId.toString())
     if (filters?.clientId) params.append("clientId", filters.clientId.toString())
 
-    const url = `${API_BASE_URL}/Course/stats${params.toString() ? `?${params.toString()}` : ""}`
+    const queryString = params.toString() ? `?${params.toString()}` : ""
 
-    const response = await fetch(url, {
-      method: "GET",
-      headers: this.getAuthHeaders(),
-    })
-
-    if (!response.ok) {
-      throw new Error(`Erro ao buscar estatísticas de cursos: ${response.statusText}`)
-    }
-
-    return response.json()
+    const response = await api.get(`/Course/stats${queryString}`)
+    return response.data
   }
 
   async getDietStats(filters?: StatsFilters): Promise<DietStats> {
@@ -64,18 +38,10 @@ class StatsService {
     if (filters?.empresaId) params.append("empresaId", filters.empresaId.toString())
     if (filters?.clientId) params.append("clientId", filters.clientId.toString())
 
-    const url = `${API_BASE_URL}/Diet/stats${params.toString() ? `?${params.toString()}` : ""}`
+    const queryString = params.toString() ? `?${params.toString()}` : ""
 
-    const response = await fetch(url, {
-      method: "GET",
-      headers: this.getAuthHeaders(),
-    })
-
-    if (!response.ok) {
-      throw new Error(`Erro ao buscar estatísticas de dietas: ${response.statusText}`)
-    }
-
-    return response.json()
+    const response = await api.get(`/Diet/stats${queryString}`)
+    return response.data
   }
 
   async getFeedbackStats(filters?: StatsFilters): Promise<FeedbackStats> {
@@ -83,18 +49,10 @@ class StatsService {
     if (filters?.empresaId) params.append("empresaId", filters.empresaId.toString())
     if (filters?.clientId) params.append("clientId", filters.clientId.toString())
 
-    const url = `${API_BASE_URL}/Feedback/stats${params.toString() ? `?${params.toString()}` : ""}`
+    const queryString = params.toString() ? `?${params.toString()}` : ""
 
-    const response = await fetch(url, {
-      method: "GET",
-      headers: this.getAuthHeaders(),
-    })
-
-    if (!response.ok) {
-      throw new Error(`Erro ao buscar estatísticas de feedbacks: ${response.statusText}`)
-    }
-
-    return response.json()
+    const response = await api.get(`/Feedback/stats${queryString}`)
+    return response.data
   }
 
   async getUserStats(filters?: StatsFilters): Promise<UserStats> {
@@ -102,21 +60,10 @@ class StatsService {
     if (filters?.empresaId) params.append("empresaId", filters.empresaId.toString())
     if (filters?.clientId) params.append("clientId", filters.clientId.toString())
 
-    const url = `${API_BASE_URL}/Users/stats${params.toString() ? `?${params.toString()}` : ""}`
+    const queryString = params.toString() ? `?${params.toString()}` : ""
 
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        ...this.getAuthHeaders(),
-        accept: "*/*",
-      },
-    })
-
-    if (!response.ok) {
-      throw new Error(`Erro ao buscar estatísticas de usuários: ${response.statusText}`)
-    }
-
-    return response.json()
+    const response = await api.get(`/Users/stats${queryString}`)
+    return response.data
   }
 
   async getWorkoutStats(filters?: StatsFilters): Promise<WorkoutStats> {
@@ -124,18 +71,10 @@ class StatsService {
     if (filters?.empresaId) params.append("empresaId", filters.empresaId.toString())
     if (filters?.clientId) params.append("clientId", filters.clientId.toString())
 
-    const url = `${API_BASE_URL}/Workout/stats${params.toString() ? `?${params.toString()}` : ""}`
+    const queryString = params.toString() ? `?${params.toString()}` : ""
 
-    const response = await fetch(url, {
-      method: "GET",
-      headers: this.getAuthHeaders(),
-    })
-
-    if (!response.ok) {
-      throw new Error(`Erro ao buscar estatísticas de treinos: ${response.statusText}`)
-    }
-
-    return response.json()
+    const response = await api.get(`/Workout/stats${queryString}`)
+    return response.data
   }
 
   async getAllStats(filters?: StatsFilters): Promise<DashboardStats> {

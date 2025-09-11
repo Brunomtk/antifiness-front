@@ -5,18 +5,9 @@ import type {
   CourseProgressSummary,
   UserProgressStats,
 } from "@/types/progress"
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://localhost:44394/api"
+import { api } from "@/lib/api"
 
 class ProgressService {
-  private async getAuthHeaders() {
-    const token = localStorage.getItem("authToken")
-    return {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    }
-  }
-
   async getProgress(filters: ProgressFilters): Promise<LessonProgress[]> {
     const params = new URLSearchParams()
 
@@ -26,32 +17,15 @@ class ProgressService {
       }
     })
 
-    const response = await fetch(`${API_BASE_URL}/Progress?${params}`, {
-      headers: await this.getAuthHeaders(),
-    })
-
-    if (!response.ok) {
-      throw new Error("Erro ao buscar progresso")
-    }
-
-    return response.json()
+    const response = await api.get(`/Progress?${params}`)
+    return response.data
   }
 
   async updateProgress(data: UpdateProgressData): Promise<LessonProgress> {
-    const response = await fetch(`${API_BASE_URL}/Progress`, {
-      method: "PUT",
-      headers: await this.getAuthHeaders(),
-      body: JSON.stringify(data),
-    })
-
-    if (!response.ok) {
-      throw new Error("Erro ao atualizar progresso")
-    }
-
-    return response.json()
+    const response = await api.put("/Progress", data)
+    return response.data
   }
 
-  // Métodos auxiliares para calcular estatísticas
   async getCourseProgress(userId: number, courseId: number): Promise<CourseProgressSummary> {
     const progress = await this.getProgress({ userId, courseId })
 
@@ -80,14 +54,10 @@ class ProgressService {
   }
 
   async getUserProgressStats(userId: number): Promise<UserProgressStats> {
-    // Para obter todas as estatísticas do usuário, precisaríamos fazer múltiplas chamadas
-    // ou ter um endpoint específico na API. Por enquanto, vamos simular com dados básicos
     const progress = await this.getProgress({ userId })
 
-    // Agrupar por curso (assumindo que temos courseId no progresso)
     const courseGroups = progress.reduce(
       (groups, p) => {
-        // Como não temos courseId diretamente, vamos usar enrollmentId como proxy
         const key = p.enrollmentId
         if (!groups[key]) {
           groups[key] = []

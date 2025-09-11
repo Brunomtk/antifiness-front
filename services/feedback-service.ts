@@ -6,19 +6,9 @@ import type {
   FeedbackFilters,
   FeedbackStats,
 } from "@/types/feedback"
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://localhost:44394/api"
+import { api } from "@/lib/api"
 
 class FeedbackService {
-  private getAuthHeaders() {
-    const token = localStorage.getItem("token") // Usando 'token' como na API de usuários
-    return {
-      "Content-Type": "application/json",
-      accept: "text/plain",
-      Authorization: token ? `Bearer ${token}` : "",
-    }
-  }
-
   // Listar feedbacks com paginação e filtros
   async getFeedbacks(filters?: FeedbackFilters): Promise<FeedbackListResponse> {
     const params = new URLSearchParams()
@@ -43,141 +33,49 @@ class FeedbackService {
     if (!params.has("pageNumber")) params.append("pageNumber", "1")
     if (!params.has("pageSize")) params.append("pageSize", "10")
 
-    const response = await fetch(`${API_BASE_URL}/Feedback?${params.toString()}`, {
-      method: "GET",
-      headers: this.getAuthHeaders(),
-    })
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error("Token de autenticação inválido ou expirado")
-      }
-      throw new Error(`Erro ao buscar feedbacks: ${response.statusText}`)
-    }
-
-    return response.json()
+    const response = await api.get(`/Feedback?${params.toString()}`)
+    return response.data
   }
 
   // Obter feedback por ID
   async getFeedbackById(id: number): Promise<Feedback> {
-    const response = await fetch(`${API_BASE_URL}/Feedback/${id}`, {
-      method: "GET",
-      headers: this.getAuthHeaders(),
-    })
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error("Token de autenticação inválido ou expirado")
-      }
-      throw new Error(`Erro ao buscar feedback: ${response.statusText}`)
-    }
-
-    return response.json()
+    const response = await api.get(`/Feedback/${id}`)
+    return response.data
   }
 
   // Criar novo feedback
   async createFeedback(data: CreateFeedbackData): Promise<Feedback> {
-    const response = await fetch(`${API_BASE_URL}/Feedback`, {
-      method: "POST",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(data),
-    })
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error("Token de autenticação inválido ou expirado")
-      }
-      throw new Error(`Erro ao criar feedback: ${response.statusText}`)
-    }
-
-    return response.json()
+    const response = await api.post("/Feedback", data)
+    return response.data
   }
 
   // Atualizar feedback
   async updateFeedback(id: number, data: UpdateFeedbackData): Promise<Feedback> {
-    const response = await fetch(`${API_BASE_URL}/Feedback/${id}`, {
-      method: "PUT",
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(data),
-    })
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error("Token de autenticação inválido ou expirado")
-      }
-      throw new Error(`Erro ao atualizar feedback: ${response.statusText}`)
-    }
-
-    return response.json()
+    const response = await api.put(`/Feedback/${id}`, data)
+    return response.data
   }
 
   // Deletar feedback
   async deleteFeedback(id: number): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/Feedback/${id}`, {
-      method: "DELETE",
-      headers: {
-        accept: "*/*",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    })
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error("Token de autenticação inválido ou expirado")
-      }
-      throw new Error(`Erro ao deletar feedback: ${response.statusText}`)
-    }
+    await api.delete(`/Feedback/${id}`)
   }
 
   // Obter estatísticas
   async getFeedbackStats(): Promise<FeedbackStats> {
-    const response = await fetch(`${API_BASE_URL}/Feedback/stats`, {
-      method: "GET",
-      headers: this.getAuthHeaders(),
-    })
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error("Token de autenticação inválido ou expirado")
-      }
-      throw new Error(`Erro ao buscar estatísticas: ${response.statusText}`)
-    }
-
-    return response.json()
+    const response = await api.get("/Feedback/stats")
+    return response.data
   }
 
   // Obter feedbacks de um cliente
   async getFeedbacksByClient(clientId: number): Promise<Feedback[]> {
-    const response = await fetch(`${API_BASE_URL}/Feedback/client/${clientId}`, {
-      method: "GET",
-      headers: this.getAuthHeaders(),
-    })
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error("Token de autenticação inválido ou expirado")
-      }
-      throw new Error(`Erro ao buscar feedbacks do cliente: ${response.statusText}`)
-    }
-
-    return response.json()
+    const response = await api.get(`/Feedback/client/${clientId}`)
+    return response.data
   }
 
   // Obter feedbacks de um trainer
   async getFeedbacksByTrainer(trainerId: number): Promise<Feedback[]> {
-    const response = await fetch(`${API_BASE_URL}/Feedback/trainer/${trainerId}`, {
-      method: "GET",
-      headers: this.getAuthHeaders(),
-    })
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error("Token de autenticação inválido ou expirado")
-      }
-      throw new Error(`Erro ao buscar feedbacks do trainer: ${response.statusText}`)
-    }
-
-    return response.json()
+    const response = await api.get(`/Feedback/trainer/${trainerId}`)
+    return response.data
   }
 }
 

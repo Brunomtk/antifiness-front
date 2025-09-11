@@ -6,11 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import {
   Search,
   Plus,
   Filter,
-  MoreHorizontal,
   Edit,
   Trash2,
   Play,
@@ -21,6 +21,8 @@ import {
   Users,
   Star,
   DollarSign,
+  RefreshCw,
+  BookOpen,
 } from "lucide-react"
 import {
   Dialog,
@@ -29,18 +31,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Textarea } from "@/components/ui/textarea"
 import { useCourses } from "@/hooks/use-course"
 import { CourseCategory, CourseLevel, CourseStatus, type CreateCourseData, type UpdateCourseData } from "@/types/course"
@@ -390,128 +383,217 @@ export default function CoursesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Cursos e Vídeos</h1>
-          <p className="text-muted-foreground">Gerencie o conteúdo educacional para seus clientes</p>
+      {/* Header with gradient background */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-green-800 p-6 text-white">
+        <div className="absolute inset-0 bg-black/10" />
+        <div className="relative flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Cursos e Vídeos</h1>
+            <p className="text-emerald-100">Gerencie o conteúdo educacional para seus clientes</p>
+          </div>
+          <Button asChild className="bg-white text-emerald-700 hover:bg-emerald-50">
+            <div onClick={() => setIsAddCourseOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Curso
+            </div>
+          </Button>
         </div>
-
-        <Button className="bg-green-600 hover:bg-green-700" onClick={() => setIsAddCourseOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Curso
-        </Button>
       </div>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle>Cursos Disponíveis</CardTitle>
-          {coursesResponse && (
-            <p className="text-sm text-muted-foreground">
-              {coursesResponse.totalCount} curso(s) encontrado(s) - Página {coursesResponse.page} de{" "}
-              {coursesResponse.totalPages}
-            </p>
-          )}
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Buscar cursos..."
-                className="pl-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handleApplyFilters}>
-                <Search className="mr-2 h-4 w-4" />
-                Buscar
-              </Button>
-
-              <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="icon">
-                    <Filter className="h-4 w-4" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>Filtrar Cursos</DialogTitle>
-                    <DialogDescription>Selecione os filtros desejados para a lista de cursos.</DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="category-filter" className="text-right">
-                        Categoria
-                      </Label>
-                      <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue placeholder="Filtrar por categoria" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Todas</SelectItem>
-                          <SelectItem value={CourseCategory.FITNESS.toString()}>Fitness</SelectItem>
-                          <SelectItem value={CourseCategory.NUTRITION.toString()}>Nutrição</SelectItem>
-                          <SelectItem value={CourseCategory.WELLNESS.toString()}>Bem-estar</SelectItem>
-                          <SelectItem value={CourseCategory.COOKING.toString()}>Culinária</SelectItem>
-                          <SelectItem value={CourseCategory.SUPPLEMENTS.toString()}>Suplementação</SelectItem>
-                          <SelectItem value={CourseCategory.PSYCHOLOGY.toString()}>Psicologia</SelectItem>
-                          <SelectItem value={CourseCategory.BUSINESS.toString()}>Negócios</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="level-filter" className="text-right">
-                        Nível
-                      </Label>
-                      <Select value={levelFilter} onValueChange={setLevelFilter}>
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue placeholder="Filtrar por nível" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Todos</SelectItem>
-                          <SelectItem value={CourseLevel.BEGINNER.toString()}>Iniciante</SelectItem>
-                          <SelectItem value={CourseLevel.INTERMEDIATE.toString()}>Intermediário</SelectItem>
-                          <SelectItem value={CourseLevel.ADVANCED.toString()}>Avançado</SelectItem>
-                          <SelectItem value={CourseLevel.ALL_LEVELS.toString()}>Todos os níveis</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="status-filter" className="text-right">
-                        Status
-                      </Label>
-                      <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue placeholder="Filtrar por status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Todos</SelectItem>
-                          <SelectItem value={CourseStatus.PUBLISHED.toString()}>Publicado</SelectItem>
-                          <SelectItem value={CourseStatus.DRAFT.toString()}>Rascunho</SelectItem>
-                          <SelectItem value={CourseStatus.ARCHIVED.toString()}>Arquivado</SelectItem>
-                          <SelectItem value={CourseStatus.PRIVATE.toString()}>Privado</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={handleClearFilters}>
-                      Limpar Filtros
-                    </Button>
-                    <Button onClick={handleApplyFilters} className="bg-green-600 hover:bg-green-700">
-                      Aplicar Filtros
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white">
+          <div className="absolute inset-0 bg-black/10" />
+          <div className="relative">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-blue-100 text-sm font-medium">Total de Cursos</p>
+                <p className="text-2xl font-bold">{coursesResponse?.totalCount || 0}</p>
+              </div>
+              <div className="rounded-full bg-white/20 p-3">
+                <BookOpen className="h-6 w-6" />
+              </div>
             </div>
           </div>
+        </div>
 
-          <div className="mt-4 rounded-md border">
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-green-500 to-green-600 p-6 text-white">
+          <div className="absolute inset-0 bg-black/10" />
+          <div className="relative">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-green-100 text-sm font-medium">Cursos Publicados</p>
+                <p className="text-2xl font-bold">
+                  {filteredCourses.filter((c) => c.status === CourseStatus.PUBLISHED).length}
+                </p>
+              </div>
+              <div className="rounded-full bg-white/20 p-3">
+                <Eye className="h-6 w-6" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 p-6 text-white">
+          <div className="absolute inset-0 bg-black/10" />
+          <div className="relative">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-orange-100 text-sm font-medium">Total de Inscrições</p>
+                <p className="text-2xl font-bold">
+                  {filteredCourses.reduce((acc, course) => acc + course.enrollmentsCount, 0)}
+                </p>
+              </div>
+              <div className="rounded-full bg-white/20 p-3">
+                <Users className="h-6 w-6" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 p-6 text-white">
+          <div className="absolute inset-0 bg-black/10" />
+          <div className="relative">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-purple-100 text-sm font-medium">Avaliação Média</p>
+                <p className="text-2xl font-bold">
+                  {filteredCourses.length > 0
+                    ? (
+                        filteredCourses.reduce((acc, course) => acc + course.averageRating, 0) / filteredCourses.length
+                      ).toFixed(1)
+                    : "0.0"}
+                </p>
+              </div>
+              <div className="rounded-full bg-white/20 p-3">
+                <Star className="h-6 w-6" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <Card className="border-none shadow-lg">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Filtros
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-6">
+            <div className="space-y-2">
+              <Label>Buscar</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar cursos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Categoria</Label>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas as categorias" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as categorias</SelectItem>
+                  <SelectItem value={CourseCategory.FITNESS.toString()}>Fitness</SelectItem>
+                  <SelectItem value={CourseCategory.NUTRITION.toString()}>Nutrição</SelectItem>
+                  <SelectItem value={CourseCategory.WELLNESS.toString()}>Bem-estar</SelectItem>
+                  <SelectItem value={CourseCategory.COOKING.toString()}>Culinária</SelectItem>
+                  <SelectItem value={CourseCategory.SUPPLEMENTS.toString()}>Suplementação</SelectItem>
+                  <SelectItem value={CourseCategory.PSYCHOLOGY.toString()}>Psicologia</SelectItem>
+                  <SelectItem value={CourseCategory.BUSINESS.toString()}>Negócios</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Nível</Label>
+              <Select value={levelFilter} onValueChange={setLevelFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos os níveis" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os níveis</SelectItem>
+                  <SelectItem value={CourseLevel.BEGINNER.toString()}>Iniciante</SelectItem>
+                  <SelectItem value={CourseLevel.INTERMEDIATE.toString()}>Intermediário</SelectItem>
+                  <SelectItem value={CourseLevel.ADVANCED.toString()}>Avançado</SelectItem>
+                  <SelectItem value={CourseLevel.ALL_LEVELS.toString()}>Todos os níveis</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos os status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os status</SelectItem>
+                  <SelectItem value={CourseStatus.DRAFT.toString()}>Rascunho</SelectItem>
+                  <SelectItem value={CourseStatus.PUBLISHED.toString()}>Publicado</SelectItem>
+                  <SelectItem value={CourseStatus.ARCHIVED.toString()}>Arquivado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>&nbsp;</Label>
+              <Button onClick={handleApplyFilters} className="w-full">
+                Buscar
+              </Button>
+            </div>
+
+            <div className="space-y-2">
+              <Label>&nbsp;</Label>
+              <Button variant="outline" onClick={handleClearFilters} className="w-full bg-transparent">
+                Limpar
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Courses Table */}
+      <Card className="border-none shadow-lg">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Cursos Disponíveis</CardTitle>
+            {coursesResponse && (
+              <p className="text-sm text-muted-foreground">
+                {coursesResponse.totalCount} curso(s) encontrado(s) - Página {coursesResponse.page} de{" "}
+                {coursesResponse.totalPages}
+              </p>
+            )}
+          </div>
+          <Button variant="outline" onClick={() => fetchCourses({ page: 1, pageSize: 50 })} disabled={loading.courses}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${loading.courses ? "animate-spin" : ""}`} />
+            Atualizar
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {loading.courses ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto"></div>
+                <p className="mt-2 text-muted-foreground">Carregando cursos...</p>
+              </div>
+            </div>
+          ) : filteredCourses.length === 0 ? (
+            <div className="text-center py-8">
+              <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">Nenhum curso encontrado.</p>
+            </div>
+          ) : (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -523,124 +605,116 @@ export default function CoursesPage() {
                   <TableHead className="hidden md:table-cell">Avaliação</TableHead>
                   <TableHead className="hidden md:table-cell">Preço</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading.courses ? (
-                  <TableRow>
-                    <TableCell colSpan={9} className="h-24 text-center">
-                      Carregando cursos...
+                {filteredCourses.map((course) => (
+                  <TableRow key={course.id}>
+                    <TableCell>
+                      <div className="font-medium">{course.title}</div>
+                      <div className="text-sm text-muted-foreground">{course.instructor}</div>
+                      <div className="text-xs text-muted-foreground md:hidden">
+                        {course.durationMinutes}min | {course.enrollmentsCount} inscrições
+                      </div>
                     </TableCell>
-                  </TableRow>
-                ) : filteredCourses.length > 0 ? (
-                  filteredCourses.map((course) => (
-                    <TableRow key={course.id}>
-                      <TableCell>
-                        <div className="font-medium">{course.title}</div>
-                        <div className="text-sm text-muted-foreground">{course.instructor}</div>
-                        <div className="text-xs text-muted-foreground md:hidden">
-                          {course.durationMinutes}min | {course.enrollmentsCount} inscrições
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={getCategoryColor(course.category)}>
-                          {getCategoryName(course.category)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        <Badge variant="secondary">{getLevelName(course.level)}</Badge>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        <div className="flex items-center">
-                          <Clock className="mr-1 h-3 w-3 text-muted-foreground" />
-                          {course.durationMinutes}min
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        <div className="flex items-center">
-                          <Users className="mr-1 h-3 w-3 text-muted-foreground" />
-                          {course.enrollmentsCount}
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        <div className="flex items-center">
-                          <Star className="mr-1 h-3 w-3 text-muted-foreground" />
-                          {course.averageRating.toFixed(1)} ({course.reviewsCount})
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        <div className="flex items-center">
-                          <DollarSign className="mr-1 h-3 w-3 text-muted-foreground" />
-                          {course.price > 0 ? `${course.currency} ${course.price.toFixed(2)}` : "Gratuito"}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="default" className={getStatusColor(course.status)}>
-                          {getStatusName(course.status)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="icon" onClick={() => handlePlayVideo(course.id)}>
-                            <Play className="h-4 w-4" />
-                          </Button>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreHorizontal className="h-4 w-4" />
+                    <TableCell>
+                      <Badge variant="outline" className={getCategoryColor(course.category)}>
+                        {getCategoryName(course.category)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <Badge variant="secondary">{getLevelName(course.level)}</Badge>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <div className="flex items-center">
+                        <Clock className="mr-1 h-3 w-3 text-muted-foreground" />
+                        {course.durationMinutes}min
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <div className="flex items-center">
+                        <Users className="mr-1 h-3 w-3 text-muted-foreground" />
+                        {course.enrollmentsCount}
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <div className="flex items-center">
+                        <Star className="mr-1 h-3 w-3 text-muted-foreground" />
+                        {course.averageRating.toFixed(1)} ({course.reviewsCount})
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <div className="flex items-center">
+                        <DollarSign className="mr-1 h-3 w-3 text-muted-foreground" />
+                        {course.price > 0 ? `${course.currency} ${course.price.toFixed(2)}` : "Gratuito"}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="default" className={getStatusColor(course.status)}>
+                        {getStatusName(course.status)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" onClick={() => handlePlayVideo(course.id)}>
+                                <Play className="h-4 w-4" />
                               </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                              <DropdownMenuItem onClick={() => handleViewDetails(course.id)}>
-                                <FileText className="mr-2 h-4 w-4" />
-                                Ver Detalhes
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleEditCourse(course.id)}>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Editar Curso
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => toggleCourseStatus(course.id, course.status)}>
-                                {course.status === CourseStatus.PUBLISHED ? (
-                                  <>
-                                    <Eye className="mr-2 h-4 w-4 text-red-500" />
-                                    <span className="text-red-500">Despublicar</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Eye className="mr-2 h-4 w-4 text-green-500" />
-                                    <span className="text-green-500">Publicar</span>
-                                  </>
-                                )}
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-red-600 focus:text-red-600"
+                            </TooltipTrigger>
+                            <TooltipContent>Reproduzir vídeo</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" onClick={() => handleViewDetails(course.id)}>
+                                <FileText className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Ver detalhes</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" onClick={() => handleEditCourse(course.id)}>
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Editar curso</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
                                 onClick={() => {
                                   setCourseToDelete(course.id)
                                   setIsDeleteDialogOpen(true)
                                 }}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
                               >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Excluir Curso
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={9} className="h-24 text-center">
-                      Nenhum curso encontrado.
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Excluir curso</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
                     </TableCell>
                   </TableRow>
-                )}
+                ))}
               </TableBody>
             </Table>
-          </div>
+          )}
         </CardContent>
       </Card>
 

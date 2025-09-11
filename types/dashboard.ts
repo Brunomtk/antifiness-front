@@ -111,3 +111,18 @@ export interface DashboardPreferences {
     }
   }
 }
+
+export enum TimePeriod {
+  TODAY = "today",
+  WEEK = "week",
+  MONTH = "month",
+  QUARTER = "quarter",
+  YEAR = "year",
+}
+
+export enum ExportFormat {
+  PDF = "pdf",
+  EXCEL = "excel",
+  CSV = "csv",
+  JSON = "json",
+}

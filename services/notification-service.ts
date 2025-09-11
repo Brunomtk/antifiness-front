@@ -5,35 +5,29 @@ import type {
   UpdateNotificationData,
   MarkAllReadData,
   NotificationFilters,
+  NotificationBatch,
 } from "@/types/notification"
+import { api } from "@/lib/api"
 
 class NotificationService {
-  private getAuthHeaders() {
-    const token = localStorage.getItem("token")
-    return {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    }
-  }
-
-  async getNotifications(filters?: NotificationFilters): Promise<Notification[]> {
+  async getNotifications(filters?: NotificationFilters): Promise<NotificationBatch> {
     try {
       const params = new URLSearchParams()
 
       if (filters?.type && Array.isArray(filters.type)) {
-        filters.type.forEach((t) => params.append("Type", t))
+        filters.type.forEach((t) => params.append("Type", t.toString()))
       } else if (filters?.type) {
         params.append("Type", filters.type.toString())
       }
 
       if (filters?.category && Array.isArray(filters.category)) {
-        filters.category.forEach((c) => params.append("Category", c))
+        filters.category.forEach((c) => params.append("Category", c.toString()))
       } else if (filters?.category) {
         params.append("Category", filters.category.toString())
       }
 
       if (filters?.priority && Array.isArray(filters.priority)) {
-        filters.priority.forEach((p) => params.append("Priority", p))
+        filters.priority.forEach((p) => params.append("Priority", p.toString()))
       } else if (filters?.priority) {
         params.append("Priority", filters.priority.toString())
       }
@@ -46,18 +40,9 @@ class NotificationService {
       if (filters?.limit) params.append("Limit", filters.limit.toString())
 
       const queryString = params.toString()
-      const url = `https://localhost:44394/api/Notification${queryString ? `?${queryString}` : ""}`
 
-      const response = await fetch(url, {
-        method: "GET",
-        headers: this.getAuthHeaders(),
-      })
-
-      if (!response.ok) {
-        throw new Error(`Erro ao buscar notificações: ${response.status}`)
-      }
-
-      return await response.json()
+      const response = await api.get(`/Notification${queryString ? `?${queryString}` : ""}`)
+      return response.data
     } catch (error) {
       console.error("Erro ao buscar notificações:", error)
       throw error
@@ -66,16 +51,8 @@ class NotificationService {
 
   async getNotificationById(id: number): Promise<Notification> {
     try {
-      const response = await fetch(`https://localhost:44394/api/Notification/${id}`, {
-        method: "GET",
-        headers: this.getAuthHeaders(),
-      })
-
-      if (!response.ok) {
-        throw new Error(`Erro ao buscar notificação: ${response.status}`)
-      }
-
-      return await response.json()
+      const response = await api.get(`/Notification/${id}`)
+      return response.data
     } catch (error) {
       console.error("Erro ao buscar notificação:", error)
       throw error
@@ -84,17 +61,8 @@ class NotificationService {
 
   async createNotification(data: CreateNotificationData): Promise<Notification> {
     try {
-      const response = await fetch(`https://localhost:44394/api/Notification`, {
-        method: "POST",
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(data),
-      })
-
-      if (!response.ok) {
-        throw new Error(`Erro ao criar notificação: ${response.status}`)
-      }
-
-      return await response.json()
+      const response = await api.post("/Notification", data)
+      return response.data
     } catch (error) {
       console.error("Erro ao criar notificação:", error)
       throw error
@@ -108,17 +76,8 @@ class NotificationService {
         readAt: new Date().toISOString(),
       }
 
-      const response = await fetch(`https://localhost:44394/api/Notification/${id}`, {
-        method: "PATCH",
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(updateData),
-      })
-
-      if (!response.ok) {
-        throw new Error(`Erro ao marcar notificação como lida: ${response.status}`)
-      }
-
-      return await response.json()
+      const response = await api.patch(`/Notification/${id}`, updateData)
+      return response.data
     } catch (error) {
       console.error("Erro ao marcar notificação como lida:", error)
       throw error
@@ -129,15 +88,7 @@ class NotificationService {
     try {
       const data: MarkAllReadData = { userId }
 
-      const response = await fetch(`https://localhost:44394/api/Notification/mark-all-read`, {
-        method: "POST",
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(data),
-      })
-
-      if (!response.ok) {
-        throw new Error(`Erro ao marcar todas como lidas: ${response.status}`)
-      }
+      await api.post("/Notification/mark-all-read", data)
     } catch (error) {
       console.error("Erro ao marcar todas como lidas:", error)
       throw error
@@ -146,14 +97,7 @@ class NotificationService {
 
   async deleteNotification(id: number): Promise<void> {
     try {
-      const response = await fetch(`https://localhost:44394/api/Notification/${id}`, {
-        method: "DELETE",
-        headers: this.getAuthHeaders(),
-      })
-
-      if (!response.ok) {
-        throw new Error(`Erro ao deletar notificação: ${response.status}`)
-      }
+      await api.delete(`/Notification/${id}`)
     } catch (error) {
       console.error("Erro ao deletar notificação:", error)
       throw error
@@ -169,18 +113,9 @@ class NotificationService {
       if (end) params.append("end", end)
 
       const queryString = params.toString()
-      const url = `https://localhost:44394/api/Notification/stats${queryString ? `?${queryString}` : ""}`
 
-      const response = await fetch(url, {
-        method: "GET",
-        headers: this.getAuthHeaders(),
-      })
-
-      if (!response.ok) {
-        throw new Error(`Erro ao buscar estatísticas: ${response.status}`)
-      }
-
-      return await response.json()
+      const response = await api.get(`/Notification/stats${queryString ? `?${queryString}` : ""}`)
+      return response.data
     } catch (error) {
       console.error("Erro ao buscar estatísticas:", error)
       throw error

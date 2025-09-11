@@ -191,7 +191,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined)
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(userReducer, initialState)
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://localhost:44394/api"
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://68.183.154.14:5000/api"
 
   // Função para obter headers com token
   const getAuthHeaders = () => {

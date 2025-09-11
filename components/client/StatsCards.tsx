@@ -8,8 +8,6 @@ import { Users, UserCheck, UserX, PauseCircle, TrendingUp, Percent } from "lucid
 
 type Props = { className?: string }
 
-const numColor = (key: string) => ({  totalclients: "",  activeclients: "text-green-600",  inactiveclients: "text-gray-500",  pausedclients: "text-slate-500",  growth: "text-blue-600",  conversion: "text-violet-600",}[key as any] || "");
-
 const pretty = (n: any) => {
   if (n == null || n !== n) return 0
   if (typeof n === "string" && n.trim() === "") return 0
@@ -33,79 +31,99 @@ export default function StatsCards({ className }: Props) {
     }
   }
 
-  React.useEffect(() => { fetchStats() }, [])
+  React.useEffect(() => {
+    fetchStats()
+  }, [])
 
   if (loading) {
     return (
-      <div className={`grid gap-4 md:grid-cols-2 lg:grid-cols-4 gap-4 ${className || ""}`}>
-        {Array.from({ length: 6 }).map((_, i) => (<Skeleton key={i} className="h-24 w-full" />))}
+      <div className={`grid gap-4 md:grid-cols-2 lg:grid-cols-4 ${className || ""}`}>
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-24 w-full" />
+        ))}
       </div>
     )
   }
 
   const s = Object.fromEntries(Object.entries(stats || {}).map(([k, v]) => [String(k).toLowerCase(), v]))
 
-  // Select only the main/compact metrics; ignore null/undefined
   const items = [
     {
       key: "totalclients",
-      label: "Clientes",
+      label: "Total de Clientes",
       value: pretty(s["totalclients"]),
       icon: Users,
+      gradient: "from-blue-500 to-blue-600",
+      iconBg: "bg-white/20",
     },
     {
       key: "activeclients",
-      label: "Ativos",
+      label: "Clientes Ativos",
       value: pretty(s["activeclients"]),
       icon: UserCheck,
+      gradient: "from-green-500 to-green-600",
+      iconBg: "bg-white/20",
     },
     {
       key: "inactiveclients",
-      label: "Inativos",
+      label: "Clientes Inativos",
       value: pretty(s["inactiveclients"]),
       icon: UserX,
+      gradient: "from-gray-500 to-gray-600",
+      iconBg: "bg-white/20",
     },
     {
       key: "pausedclients",
-      label: "Pausados",
+      label: "Clientes Pausados",
       value: pretty(s["pausedclients"]),
       icon: PauseCircle,
+      gradient: "from-orange-500 to-orange-600",
+      iconBg: "bg-white/20",
     },
     {
       key: "newclientsthismonth",
-      label: "Novos (mês)",
+      label: "Novos este Mês",
       value: pretty(s["newclientsthismonth"]),
       icon: TrendingUp,
+      gradient: "from-purple-500 to-purple-600",
+      iconBg: "bg-white/20",
     },
     {
       key: "retentionrate",
-      label: "Retenção",
+      label: "Taxa de Retenção",
       value: (() => {
         const val = pretty(s["retentionrate"])
-        // If backend returns fraction (0..1), convert to percent
         const pct = val <= 1 ? Math.round(val * 100) : Math.round(val)
         return pct
       })(),
       suffix: "%",
       icon: Percent,
+      gradient: "from-cyan-500 to-cyan-600",
+      iconBg: "bg-white/20",
     },
   ].filter((it) => it.value != null)
 
   if (items.length === 0) return null
 
   return (
-    <div className={`grid gap-4 md:grid-cols-2 lg:grid-cols-4 gap-4 ${className || ""}`}>
-      {items.map(({ key, label, value, icon: Icon, suffix }) => (
+    <div className={`grid gap-4 md:grid-cols-2 lg:grid-cols-4 ${className || ""}`}>
+      {items.map(({ key, label, value, icon: Icon, suffix, gradient, iconBg }) => (
         <Card
           key={key}
-          className="shadow-sm border-none bg-gradient-to-b from-muted/30 to-background hover:from-muted/40 transition-colors"
+          className={`relative overflow-hidden border-none shadow-lg bg-gradient-to-br ${gradient} text-white hover:shadow-xl transition-all duration-300`}
         >
-          <CardContent className="py-4">
+          <CardContent className="p-6">
             <div className="flex items-center justify-between">
-              <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
-              <Icon className="h-4 w-4 opacity-60" />
-            </div>
-            <div className="mt-1 text-2xl font-semibold"><span className={`\${numColor(key)} `}>{value}</span>{suffix ? <span className="text-base align-super ml-1">{suffix}</span> : null}
+              <div>
+                <p className="text-white/80 text-sm font-medium">{label}</p>
+                <p className="text-3xl font-bold text-white mt-2">
+                  {value}
+                  {suffix && <span className="text-lg ml-1">{suffix}</span>}
+                </p>
+              </div>
+              <div className={`p-3 rounded-full ${iconBg}`}>
+                <Icon className="h-6 w-6 text-white" />
+              </div>
             </div>
           </CardContent>
         </Card>

@@ -85,155 +85,155 @@ export default function AdminReports() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Relatórios e Analytics</h1>
-          <p className="text-muted-foreground">Dashboard completo com estatísticas em tempo real do seu negócio</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1month">Último mês</SelectItem>
-              <SelectItem value="3months">Últimos 3 meses</SelectItem>
-              <SelectItem value="6months">Últimos 6 meses</SelectItem>
-              <SelectItem value="1year">Último ano</SelectItem>
-              <SelectItem value="custom">Período customizado</SelectItem>
-            </SelectContent>
-          </Select>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="w-60 justify-start text-left font-normal bg-transparent">
-                <Calendar className="mr-2 h-4 w-4" />
-                {dateRange?.from ? (
-                  dateRange.to ? (
-                    <>
-                      {format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
-                      {format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}
-                    </>
+    <div className="flex flex-col gap-6">
+      {/* Header with gradient background */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-blue-800 p-6 text-white">
+        <div className="absolute inset-0 bg-black/10" />
+        <div className="relative flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Relatórios e Analytics</h1>
+            <p className="text-indigo-100">Dashboard completo com estatísticas em tempo real do seu negócio</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+              <SelectTrigger className="w-40 bg-white/10 border-white/20 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1month">Último mês</SelectItem>
+                <SelectItem value="3months">Últimos 3 meses</SelectItem>
+                <SelectItem value="6months">Últimos 6 meses</SelectItem>
+                <SelectItem value="1year">Último ano</SelectItem>
+                <SelectItem value="custom">Período customizado</SelectItem>
+              </SelectContent>
+            </Select>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-60 justify-start text-left font-normal bg-transparent">
+                  <Calendar className="mr-2 h-4 w-4" />
+                  {dateRange?.from ? (
+                    dateRange.to ? (
+                      <>
+                        {format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
+                        {format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}
+                      </>
+                    ) : (
+                      format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })
+                    )
                   ) : (
-                    format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })
-                  )
-                ) : (
-                  <span>Selecionar período</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <CalendarComponent
-                initialFocus
-                mode="range"
-                defaultMonth={dateRange?.from}
-                selected={dateRange}
-                onSelect={setDateRange}
-                numberOfMonths={2}
-              />
-            </PopoverContent>
-          </Popover>
-          <Button onClick={handleRefresh} variant="outline" disabled={loading}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-            Atualizar
-          </Button>
-          <Button onClick={handleExport} disabled={!stats}>
-            <Download className="mr-2 h-4 w-4" />
-            Exportar
-          </Button>
+                    <span>Selecionar período</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarComponent
+                  initialFocus
+                  mode="range"
+                  defaultMonth={dateRange?.from}
+                  selected={dateRange}
+                  onSelect={setDateRange}
+                  numberOfMonths={2}
+                />
+              </PopoverContent>
+            </Popover>
+            <Button
+              onClick={handleRefresh}
+              variant="outline"
+              disabled={loading}
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+            >
+              <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+              Atualizar
+            </Button>
+            <Button onClick={handleExport} disabled={!stats} className="bg-white text-indigo-700 hover:bg-indigo-50">
+              <Download className="mr-2 h-4 w-4" />
+              Exportar
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Métricas Principais */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {/* Clientes */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Clientes</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{stats?.clients.totalClients || 0}</div>
-                <div className="flex items-center text-xs text-muted-foreground">
-                  {stats?.clients.monthlyGrowthPercentage && stats.clients.monthlyGrowthPercentage > 0 ? (
-                    <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
-                  ) : (
-                    <TrendingDown className="mr-1 h-3 w-3 text-red-500" />
-                  )}
-                  {stats?.clients.monthlyGrowthPercentage?.toFixed(1) || 0}% crescimento mensal
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white">
+          <div className="absolute inset-0 bg-black/10" />
+          <div className="relative">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-blue-100 text-sm font-medium">Total de Clientes</p>
+                <p className="text-2xl font-bold">{stats?.clients.totalClients || 0}</p>
+              </div>
+              <div className="rounded-full bg-white/20 p-3">
+                <Users className="h-6 w-6" />
+              </div>
+            </div>
+            <div className="flex items-center text-xs text-blue-100 mt-2">
+              {stats?.clients.monthlyGrowthPercentage && stats.clients.monthlyGrowthPercentage > 0 ? (
+                <TrendingUp className="mr-1 h-3 w-3" />
+              ) : (
+                <TrendingDown className="mr-1 h-3 w-3" />
+              )}
+              {stats?.clients.monthlyGrowthPercentage?.toFixed(1) || 0}% crescimento mensal
+            </div>
+          </div>
+        </div>
 
-        {/* Receita de Cursos */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Receita de Cursos</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <Skeleton className="h-8 w-24" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">R$ {stats?.courses.totalRevenue?.toLocaleString() || 0}</div>
-                <div className="flex items-center text-xs text-muted-foreground">
-                  <BookOpen className="mr-1 h-3 w-3" />
-                  {stats?.courses.totalEnrollments || 0} matrículas
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-green-500 to-green-600 p-6 text-white">
+          <div className="absolute inset-0 bg-black/10" />
+          <div className="relative">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-green-100 text-sm font-medium">Receita de Cursos</p>
+                <p className="text-2xl font-bold">R$ {stats?.courses.totalRevenue?.toLocaleString() || 0}</p>
+              </div>
+              <div className="rounded-full bg-white/20 p-3">
+                <DollarSign className="h-6 w-6" />
+              </div>
+            </div>
+            <div className="flex items-center text-xs text-green-100 mt-2">
+              <BookOpen className="mr-1 h-3 w-3" />
+              {stats?.courses.totalEnrollments || 0} matrículas
+            </div>
+          </div>
+        </div>
 
-        {/* Taxa de Retenção */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Taxa de Retenção</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <Skeleton className="h-8 w-16" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{stats?.clients.retentionRate || 0}%</div>
-                <div className="flex items-center text-xs text-muted-foreground">
-                  <Activity className="mr-1 h-3 w-3" />
-                  {stats?.clients.activeClients || 0} clientes ativos
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 p-6 text-white">
+          <div className="absolute inset-0 bg-black/10" />
+          <div className="relative">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-orange-100 text-sm font-medium">Taxa de Retenção</p>
+                <p className="text-2xl font-bold">{stats?.clients.retentionRate || 0}%</p>
+              </div>
+              <div className="rounded-full bg-white/20 p-3">
+                <Target className="h-6 w-6" />
+              </div>
+            </div>
+            <div className="flex items-center text-xs text-orange-100 mt-2">
+              <Activity className="mr-1 h-3 w-3" />
+              {stats?.clients.activeClients || 0} clientes ativos
+            </div>
+          </div>
+        </div>
 
-        {/* Satisfação Média */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Satisfação Média</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <Skeleton className="h-8 w-16" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{stats?.feedbacks.averageRating?.toFixed(1) || 0}/10</div>
-                <div className="flex items-center text-xs text-muted-foreground">
-                  <MessageSquare className="mr-1 h-3 w-3" />
-                  {stats?.feedbacks.totalFeedbacks || 0} avaliações
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 p-6 text-white">
+          <div className="absolute inset-0 bg-black/10" />
+          <div className="relative">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-purple-100 text-sm font-medium">Satisfação Média</p>
+                <p className="text-2xl font-bold">{stats?.feedbacks.averageRating?.toFixed(1) || 0}/10</p>
+              </div>
+              <div className="rounded-full bg-white/20 p-3">
+                <Star className="h-6 w-6" />
+              </div>
+            </div>
+            <div className="flex items-center text-xs text-purple-100 mt-2">
+              <MessageSquare className="mr-1 h-3 w-3" />
+              {stats?.feedbacks.totalFeedbacks || 0} avaliações
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Relatórios Detalhados */}

@@ -1,5 +1,9 @@
 "use client"
 
+import { Badge } from "@/components/ui/badge"
+
+import { TooltipTrigger } from "@/components/ui/tooltip"
+
 import type React from "react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
@@ -17,14 +21,12 @@ import {
   Video,
   FileText,
   Bell,
-  Home,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Badge } from "@/components/ui/badge"
+import { Tooltip, TooltipContent, TooltipProvider } from "@/components/ui/tooltip"
 import { useMobile } from "@/hooks/use-mobile"
 import { PWAStatus } from "@/components/pwa-status"
 import { useUser } from "@/hooks/use-user"
@@ -69,7 +71,7 @@ export function ClientSidebar({ className }: SidebarProps) {
   const routes = [
     {
       label: "Dashboard",
-      icon: Home,
+      icon: Menu,
       href: "/client/dashboard",
       active: pathname === "/client/dashboard",
       shortLabel: "Início",
@@ -87,6 +89,14 @@ export function ClientSidebar({ className }: SidebarProps) {
       href: "/client/workout",
       active: pathname === "/client/workout",
       shortLabel: "Treino",
+    },
+    {
+      label: "Notificações",
+      icon: Bell,
+      href: "/client/notifications",
+      active: pathname === "/client/notifications",
+      badge: unreadCount > 0 ? unreadCount : undefined,
+      shortLabel: "Avisos",
     },
     {
       label: "Conteúdos",
@@ -109,14 +119,6 @@ export function ClientSidebar({ className }: SidebarProps) {
       href: "/client/feedbacks",
       active: pathname === "/client/feedbacks",
       shortLabel: "Feedback",
-    },
-    {
-      label: "Notificações",
-      icon: Bell,
-      href: "/client/notifications",
-      active: pathname === "/client/notifications",
-      badge: unreadCount || 0,
-      shortLabel: "Avisos",
     },
     {
       label: "Perfil",
@@ -159,7 +161,7 @@ export function ClientSidebar({ className }: SidebarProps) {
           <div className="ml-2 h-6 w-32 rounded bg-gray-200"></div>
         </div>
         <div className="flex-1 p-4 space-y-2">
-          {Array.from({ length: 8 }).map((_, i) => (
+          {Array.from({ length: 7 }).map((_, i) => (
             <div key={i} className="h-10 rounded-lg bg-gray-200"></div>
           ))}
         </div>

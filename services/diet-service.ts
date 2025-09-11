@@ -9,8 +9,7 @@ import type {
   CreateProgressRequest,
   DietFilters,
 } from "@/types/diet"
-
-const API_BASE_URL = "https://localhost:44394/api"
+import { api } from "@/lib/api"
 
 // Token & headers helpers
 const getAuthToken = (): string => {
@@ -22,12 +21,10 @@ const getAuthToken = (): string => {
 }
 
 const getHeaders = (json = true): HeadersInit => {
-  const token = getAuthToken()
   const base: Record<string, string> = {
     accept: "text/plain",
   }
   if (json) base["Content-Type"] = "application/json"
-  if (token) base["Authorization"] = `Bearer ${token}`
   return base
 }
 
@@ -46,146 +43,67 @@ class DietService {
       if (v !== undefined && v !== null && v !== "") params.append(k, String(v))
     })
 
-    const resp = await fetch(`${API_BASE_URL}/Diet?${params.toString()}`, {
-      method: "GET",
-      headers: getHeaders(false),
-      cache: "no-store",
-    })
-    handleAuthError(resp)
-    if (!resp.ok) throw new Error(`Erro ao carregar dietas: ${resp.status}`)
-    return resp.json()
+    const response = await api.get(`/Diet?${params.toString()}`)
+    return response.data
   }
 
   async getDietById(id: number): Promise<ApiDiet> {
-    const resp = await fetch(`${API_BASE_URL}/Diet/${id}`, {
-      method: "GET",
-      headers: getHeaders(false),
-      cache: "no-store",
-    })
-    handleAuthError(resp)
-    if (!resp.ok) throw new Error(`Erro ao carregar dieta: ${resp.status}`)
-    return resp.json()
+    const response = await api.get(`/Diet/${id}`)
+    return response.data
   }
 
   async createDiet(data: CreateDietRequest): Promise<ApiDiet> {
-    const resp = await fetch(`${API_BASE_URL}/Diet`, {
-      method: "POST",
-      headers: getHeaders(true),
-      body: JSON.stringify(data),
-    })
-    handleAuthError(resp)
-    if (!resp.ok) throw new Error(`Erro ao criar dieta: ${resp.status}`)
-    return resp.json()
+    const response = await api.post("/Diet", data)
+    return response.data
   }
 
   async updateDiet(id: number, data: Partial<CreateDietRequest>): Promise<ApiDiet> {
-    const resp = await fetch(`${API_BASE_URL}/Diet/${id}`, {
-      method: "PUT",
-      headers: getHeaders(true),
-      body: JSON.stringify(data),
-    })
-    handleAuthError(resp)
-    if (!resp.ok) throw new Error(`Erro ao atualizar dieta: ${resp.status}`)
-    return resp.json()
+    const response = await api.put(`/Diet/${id}`, data)
+    return response.data
   }
 
   async deleteDiet(id: number): Promise<void> {
-    const resp = await fetch(`${API_BASE_URL}/Diet/${id}`, {
-      method: "DELETE",
-      headers: getHeaders(false),
-    })
-    handleAuthError(resp)
-    if (!resp.ok) throw new Error(`Erro ao excluir dieta: ${resp.status}`)
+    await api.delete(`/Diet/${id}`)
   }
 
   async getDietStats(): Promise<ApiDietStats> {
-    const resp = await fetch(`${API_BASE_URL}/Diet/stats`, {
-      method: "GET",
-      headers: getHeaders(false),
-      cache: "no-store",
-    })
-    handleAuthError(resp)
-    if (!resp.ok) throw new Error(`Erro ao carregar estatísticas: ${resp.status}`)
-    return resp.json() as Promise<ApiDietStats>
+    const response = await api.get("/Diet/stats")
+    return response.data
   }
 
   // ---- Meals ----
   async getDietMeals(dietId: number): Promise<ApiMeal[]> {
-    const resp = await fetch(`${API_BASE_URL}/Diet/meals?dietId=${dietId}`, {
-      method: "GET",
-      headers: getHeaders(false),
-      cache: "no-store",
-    })
-    handleAuthError(resp)
-    if (!resp.ok) throw new Error(`Erro ao carregar refeições: ${resp.status}`)
-    const data = await resp.json()
-    return Array.isArray(data) ? data : []
+    const response = await api.get(`/Diet/meals?dietId=${dietId}`)
+    return Array.isArray(response.data) ? response.data : []
   }
 
   async createMeal(dietId: number, data: CreateMealRequest): Promise<ApiMeal> {
-    const resp = await fetch(`${API_BASE_URL}/Diet/${dietId}/meals`, {
-      method: "POST",
-      headers: getHeaders(true),
-      body: JSON.stringify(data),
-    })
-    handleAuthError(resp)
-    if (!resp.ok) throw new Error(`Erro ao criar refeição: ${resp.status}`)
-    return resp.json()
+    const response = await api.post(`/Diet/${dietId}/meals`, data)
+    return response.data
   }
 
   async updateMeal(dietId: number, mealId: number, data: Partial<CreateMealRequest>): Promise<ApiMeal> {
-    const resp = await fetch(`${API_BASE_URL}/Diet/${dietId}/meals/${mealId}`, {
-      method: "PUT",
-      headers: getHeaders(true),
-      body: JSON.stringify(data),
-    })
-    handleAuthError(resp)
-    if (!resp.ok) throw new Error(`Erro ao atualizar refeição: ${resp.status}`)
-    return resp.json()
+    const response = await api.put(`/Diet/${dietId}/meals/${mealId}`, data)
+    return response.data
   }
 
   async deleteMeal(dietId: number, mealId: number): Promise<void> {
-    const resp = await fetch(`${API_BASE_URL}/Diet/${dietId}/meals/${mealId}`, {
-      method: "DELETE",
-      headers: getHeaders(false),
-    })
-    handleAuthError(resp)
-    if (!resp.ok) throw new Error(`Erro ao excluir refeição: ${resp.status}`)
+    await api.delete(`/Diet/${dietId}/meals/${mealId}`)
   }
 
   async completeMeal(mealId: number): Promise<void> {
-    // Ajuste a rota conforme seu backend
-    const resp = await fetch(`${API_BASE_URL}/Diet/meals/${mealId}/complete`, {
-      method: "POST",
-      headers: getHeaders(false),
-    })
-    handleAuthError(resp)
-    if (resp.status === 404) throw new Error('Refeição não encontrada no servidor');
-    if (!resp.ok) throw new Error(`Erro ao concluir refeição: ${resp.status}`)
+    await api.post(`/Diet/meals/${mealId}/complete`)
   }
 
   // ---- Progress ----
   async getDietProgress(dietId: number): Promise<ApiDietProgress[]> {
-    const resp = await fetch(`${API_BASE_URL}/Diet/progress?dietId=${dietId}`, {
-      method: "GET",
-      headers: getHeaders(false),
-      cache: "no-store",
-    })
-    handleAuthError(resp)
-    if (!resp.ok) throw new Error(`Erro ao buscar progresso: ${resp.status}`)
-    const data = await resp.json()
-    return Array.isArray(data) ? data : []
+    const response = await api.get(`/Diet/progress?dietId=${dietId}`)
+    return Array.isArray(response.data) ? response.data : []
   }
 
   async createProgress(dietId: number, data: CreateProgressRequest): Promise<ApiDietProgress> {
-    const resp = await fetch(`${API_BASE_URL}/Diet/${dietId}/progress`, {
-      method: "POST",
-      headers: getHeaders(true),
-      body: JSON.stringify(data),
-    })
-    handleAuthError(resp)
-    if (!resp.ok) throw new Error(`Erro ao criar progresso: ${resp.status}`)
-    return resp.json()
+    const response = await api.post(`/Diet/${dietId}/progress`, data)
+    return response.data
   }
 }
 

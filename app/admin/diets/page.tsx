@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Search, Plus, Filter, MoreHorizontal, Edit, Trash2, FileText, Copy, Calendar, Loader2 } from "lucide-react"
+import { Search, Plus, Filter, Edit, Trash2, FileText, Copy, Calendar, Loader2, Apple } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -18,14 +18,6 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Textarea } from "@/components/ui/textarea"
 import { useDiets, useDietStats } from "@/hooks/use-diet"
 import { useClients } from "@/hooks/use-client"
@@ -216,61 +208,99 @@ export default function DietsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dietas</h1>
-          <p className="text-muted-foreground">Gerencie os planos alimentares para seus clientes</p>
+      {/* Header with gradient background */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-green-600 via-green-700 to-emerald-800 p-6 text-white">
+        <div className="absolute inset-0 bg-black/10" />
+        <div className="relative flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Dietas</h1>
+            <p className="text-green-100">Gerencie os planos alimentares para seus clientes</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="secondary" asChild>
+              <Link href="/admin/foods">
+                <Apple className="mr-2 h-4 w-4" />
+                Alimentos
+              </Link>
+            </Button>
+            <Button
+              className="bg-white text-green-700 hover:bg-green-50"
+              onClick={() => setIsAddDietOpen(true)}
+              disabled={creating}
+            >
+              {creating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+              Nova Dieta
+            </Button>
+          </div>
         </div>
-
-        <Button className="bg-green-600 hover:bg-green-700" onClick={() => setIsAddDietOpen(true)} disabled={creating}>
-          {creating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
-          Nova Dieta
-        </Button>
       </div>
 
       {/* Cards de estatísticas */}
       {stats && (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total de Dietas</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalDiets}</div>
-              <p className="text-xs text-muted-foreground">+{stats.dietsThisMonth} este mês</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Dietas Ativas</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats.activeDiets}</div>
-              <p className="text-xs text-muted-foreground">{stats.activeDietsPercentage.toFixed(1)}% do total</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Taxa de Conclusão</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{stats.averageCompletionRate.toFixed(1)}%</div>
-              <p className="text-xs text-muted-foreground">Média de adesão</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Calorias Médias</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-purple-600">{stats.averageCaloriesPerDiet}</div>
-              <p className="text-xs text-muted-foreground">kcal por dieta</p>
-            </CardContent>
-          </Card>
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white">
+            <div className="absolute inset-0 bg-black/10" />
+            <div className="relative">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-blue-100 text-sm font-medium">Total de Dietas</p>
+                  <p className="text-2xl font-bold">{stats.totalDiets}</p>
+                  <p className="text-xs text-blue-200">+{stats.dietsThisMonth} este mês</p>
+                </div>
+                <div className="rounded-full bg-white/20 p-3">
+                  <FileText className="h-6 w-6" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-green-500 to-green-600 p-6 text-white">
+            <div className="absolute inset-0 bg-black/10" />
+            <div className="relative">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-green-100 text-sm font-medium">Dietas Ativas</p>
+                  <p className="text-2xl font-bold">{stats.activeDiets}</p>
+                  <p className="text-xs text-green-200">{stats.activeDietsPercentage.toFixed(1)}% do total</p>
+                </div>
+                <div className="rounded-full bg-white/20 p-3">
+                  <Calendar className="h-6 w-6" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 p-6 text-white">
+            <div className="absolute inset-0 bg-black/10" />
+            <div className="relative">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-orange-100 text-sm font-medium">Taxa de Conclusão</p>
+                  <p className="text-2xl font-bold">{stats.averageCompletionRate.toFixed(1)}%</p>
+                  <p className="text-xs text-orange-200">Média de adesão</p>
+                </div>
+                <div className="rounded-full bg-white/20 p-3">
+                  <Calendar className="h-6 w-6" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 p-6 text-white">
+            <div className="absolute inset-0 bg-black/10" />
+            <div className="relative">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-purple-100 text-sm font-medium">Calorias Médias</p>
+                  <p className="text-2xl font-bold">{stats.averageCaloriesPerDiet}</p>
+                  <p className="text-xs text-purple-200">kcal por dieta</p>
+                </div>
+                <div className="rounded-full bg-white/20 p-3">
+                  <Calendar className="h-6 w-6" />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -319,7 +349,7 @@ export default function DietsPage() {
                   </TableRow>
                 ) : filteredDiets.length > 0 ? (
                   filteredDiets.map((diet) => (
-                    <TableRow key={diet.id}>
+                    <TableRow key={diet.id} className="hover:bg-gray-50/50">
                       <TableCell>
                         <div className="font-medium">{diet.name}</div>
                         <div className="text-xs text-muted-foreground md:hidden">
@@ -327,65 +357,73 @@ export default function DietsPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="font-medium">{diet.clientName || "Cliente não encontrado"}</div>
+                        <div className="font-medium">{diet.clientName || "Cliente não atribuído"}</div>
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className={getDietStatusColor(diet.status)}>
                           {getDietStatusLabel(diet.status)}
                         </Badge>
                       </TableCell>
-                      <TableCell className="hidden md:table-cell">{diet.dailyCalories} kcal</TableCell>
-                      <TableCell className="hidden md:table-cell">{diet.totalMeals}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <span className="font-medium">{diet.dailyCalories} kcal</span>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <span className="font-medium">{diet.totalMeals}</span>
+                      </TableCell>
                       <TableCell className="hidden md:table-cell">
                         <div className="flex items-center gap-2">
                           <div className="w-16 bg-gray-200 rounded-full h-2">
                             <div
-                              className="bg-green-600 h-2 rounded-full"
+                              className="bg-green-600 h-2 rounded-full transition-all duration-300"
                               style={{ width: `${diet.completionPercentage}%` }}
                             />
                           </div>
-                          <span className="text-xs">{diet.completionPercentage}%</span>
+                          <span className="text-xs font-medium">{diet.completionPercentage}%</span>
                         </div>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
-                        {new Date(diet.startDate).toLocaleDateString("pt-BR")}
+                        <span className="text-sm">{new Date(diet.startDate).toLocaleDateString("pt-BR")}</span>
                       </TableCell>
                       <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                            <DropdownMenuItem asChild>
-                              <Link href={`/admin/diets/${diet.id}`} className="cursor-pointer">
-                                <FileText className="mr-2 h-4 w-4" />
-                                Ver Detalhes
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleEditDiet(diet.id)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Editar Dieta
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDuplicateDiet(diet.id)}>
-                              <Copy className="mr-2 h-4 w-4" />
-                              Duplicar Dieta
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-red-600 focus:text-red-600"
-                              onClick={() => {
-                                setDietToDelete(diet.id)
-                                setIsDeleteDialogOpen(true)
-                              }}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Excluir Dieta
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
+                            asChild
+                          >
+                            <Link href={`/admin/diets/${diet.id}`}>
+                              <FileText className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 hover:bg-green-50 hover:text-green-600"
+                            onClick={() => handleEditDiet(diet.id)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 hover:bg-purple-50 hover:text-purple-600"
+                            onClick={() => handleDuplicateDiet(diet.id)}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
+                            onClick={() => {
+                              setDietToDelete(diet.id)
+                              setIsDeleteDialogOpen(true)
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -458,7 +496,11 @@ export default function DietsPage() {
               </Label>
               <Select
                 value={newDiet.clientId.toString()}
-                onValueChange={(value) => { const id = Number(value); const c = clients.find(c=>c.id===id); setNewDiet({ ...newDiet, clientId: id, clientName: c?.name || "" }) }}
+                onValueChange={(value) => {
+                  const id = Number(value)
+                  const c = clients.find((c) => c.id === id)
+                  setNewDiet({ ...newDiet, clientId: id, clientName: c?.name || "" })
+                }}
               >
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Selecione o cliente" />

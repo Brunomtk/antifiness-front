@@ -24,6 +24,16 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
+import {
   Bell,
   Search,
   Filter,
@@ -42,19 +52,19 @@ import {
 } from "lucide-react"
 import { notificationService } from "@/services/notification-service"
 import type {
-  Notification,
   NotificationStats,
   NotificationFilters,
   NotificationType,
   NotificationCategory,
   NotificationPriority,
+  NotificationBatch,
 } from "@/types/notification"
 import { useToast } from "@/components/ui/use-toast"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 
 export default function AdminNotificationsPage() {
-  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [notificationBatch, setNotificationBatch] = useState<NotificationBatch | null>(null)
   const [stats, setStats] = useState<NotificationStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState<number | null>(null)
@@ -68,9 +78,20 @@ export default function AdminNotificationsPage() {
   const [selectedPriority, setSelectedPriority] = useState<string>("all")
   const [selectedStatus, setSelectedStatus] = useState<string>("all")
 
+  // Create notification modal state
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [createForm, setCreateForm] = useState({
+    title: "",
+    message: "",
+    type: "1",
+    category: "1",
+    priority: "2",
+    userId: "",
+  })
+  const [creating, setCreating] = useState(false)
+
   const { toast } = useToast()
 
-  // Carregar dados iniciais
   useEffect(() => {
     loadNotifications()
     loadStats()
@@ -87,7 +108,7 @@ export default function AdminNotificationsPage() {
       if (selectedStatus !== "all") filters.read = selectedStatus === "read"
 
       const data = await notificationService.getNotifications(filters)
-      setNotifications(data)
+      setNotificationBatch(data)
     } catch (error) {
       toast({
         title: "Erro",
@@ -108,25 +129,30 @@ export default function AdminNotificationsPage() {
     }
   }
 
-  // Aplicar filtros
   useEffect(() => {
     loadNotifications()
   }, [selectedType, selectedCategory, selectedPriority, selectedStatus])
 
-  // Filtrar por busca
-  const filteredNotifications = notifications.filter(
-    (notification) =>
-      notification.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      notification.message.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  const notifications = notificationBatch?.notifications || []
+
+  const filteredNotifications = Array.isArray(notifications)
+    ? notifications.filter(
+        (notification) =>
+          notification.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          notification.message.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
+    : []
 
   const handleMarkAsRead = async (id: number) => {
     try {
       setMarkingAsRead(id)
       await notificationService.markAsRead(id)
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, read: true, readAt: new Date().toISOString() } : n)),
-      )
+      if (notificationBatch) {
+        const updatedNotifications = notificationBatch.notifications.map((n) =>
+          n.id === id ? { ...n, read: true, readAt: new Date().toISOString() } : n,
+        )
+        setNotificationBatch({ ...notificationBatch, notifications: updatedNotifications })
+      }
       loadStats()
       toast({
         title: "Sucesso",
@@ -146,9 +172,15 @@ export default function AdminNotificationsPage() {
   const handleMarkAllAsRead = async () => {
     try {
       setMarkingAllAsRead(true)
-      // Assumindo userId = 1 para admin, ajustar conforme necessário
       await notificationService.markAllAsRead(1)
-      setNotifications((prev) => prev.map((n) => ({ ...n, read: true, readAt: new Date().toISOString() })))
+      if (notificationBatch) {
+        const updatedNotifications = notificationBatch.notifications.map((n) => ({
+          ...n,
+          read: true,
+          readAt: new Date().toISOString(),
+        }))
+        setNotificationBatch({ ...notificationBatch, notifications: updatedNotifications })
+      }
       loadStats()
       toast({
         title: "Sucesso",
@@ -169,7 +201,14 @@ export default function AdminNotificationsPage() {
     try {
       setDeleting(id)
       await notificationService.deleteNotification(id)
-      setNotifications((prev) => prev.filter((n) => n.id !== id))
+      if (notificationBatch) {
+        const updatedNotifications = notificationBatch.notifications.filter((n) => n.id !== id)
+        setNotificationBatch({
+          ...notificationBatch,
+          notifications: updatedNotifications,
+          total: notificationBatch.total - 1,
+        })
+      }
       loadStats()
       toast({
         title: "Sucesso",
@@ -183,6 +222,46 @@ export default function AdminNotificationsPage() {
       })
     } finally {
       setDeleting(null)
+    }
+  }
+
+  const handleCreateNotification = async () => {
+    try {
+      setCreating(true)
+      await notificationService.createNotification({
+        title: createForm.title,
+        message: createForm.message,
+        type: Number(createForm.type) as NotificationType,
+        category: Number(createForm.category) as NotificationCategory,
+        priority: Number(createForm.priority) as NotificationPriority,
+        userId: Number(createForm.userId),
+      })
+
+      setIsCreateModalOpen(false)
+      setCreateForm({
+        title: "",
+        message: "",
+        type: "1",
+        category: "1",
+        priority: "2",
+        userId: "",
+      })
+
+      loadNotifications()
+      loadStats()
+
+      toast({
+        title: "Sucesso",
+        description: "Notificação criada com sucesso",
+      })
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Falha ao criar notificação",
+        variant: "destructive",
+      })
+    } finally {
+      setCreating(false)
     }
   }
 
@@ -268,74 +347,208 @@ export default function AdminNotificationsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Notificações</h1>
-          <p className="text-muted-foreground">Gerencie todas as notificações do sistema.</p>
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 p-8 text-white">
+        <div className="relative z-10">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Notificações</h1>
+              <p className="text-white/80">Gerencie todas as notificações do sistema</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={handleMarkAllAsRead}
+                disabled={markingAllAsRead || !Array.isArray(notifications) || !notifications.some((n) => !n.read)}
+                variant="secondary"
+                className="bg-white/20 hover:bg-white/30 text-white border-white/20"
+              >
+                <CheckCheck className="mr-2 h-4 w-4" />
+                {markingAllAsRead ? "Marcando..." : "Marcar todas como lidas"}
+              </Button>
+              <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-white text-purple-600 hover:bg-white/90">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Nova Notificação
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[500px]">
+                  <DialogHeader>
+                    <DialogTitle>Nova Notificação</DialogTitle>
+                    <DialogDescription>Crie uma nova notificação para enviar aos usuários.</DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="title">Título</Label>
+                      <Input
+                        id="title"
+                        value={createForm.title}
+                        onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
+                        placeholder="Digite o título da notificação"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="message">Mensagem</Label>
+                      <Textarea
+                        id="message"
+                        value={createForm.message}
+                        onChange={(e) => setCreateForm({ ...createForm, message: e.target.value })}
+                        placeholder="Digite a mensagem da notificação"
+                        rows={3}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Tipo</Label>
+                        <Select
+                          value={createForm.type}
+                          onValueChange={(value) => setCreateForm({ ...createForm, type: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">Sistema</SelectItem>
+                            <SelectItem value="2">Dieta</SelectItem>
+                            <SelectItem value="3">Treino</SelectItem>
+                            <SelectItem value="4">Plano</SelectItem>
+                            <SelectItem value="5">Mensagem</SelectItem>
+                            <SelectItem value="6">Lembrete</SelectItem>
+                            <SelectItem value="7">Conquista</SelectItem>
+                            <SelectItem value="8">Alerta</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Categoria</Label>
+                        <Select
+                          value={createForm.category}
+                          onValueChange={(value) => setCreateForm({ ...createForm, category: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">Informação</SelectItem>
+                            <SelectItem value="2">Sucesso</SelectItem>
+                            <SelectItem value="3">Aviso</SelectItem>
+                            <SelectItem value="4">Erro</SelectItem>
+                            <SelectItem value="5">Lembrete</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Prioridade</Label>
+                        <Select
+                          value={createForm.priority}
+                          onValueChange={(value) => setCreateForm({ ...createForm, priority: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">Baixa</SelectItem>
+                            <SelectItem value="2">Normal</SelectItem>
+                            <SelectItem value="3">Alta</SelectItem>
+                            <SelectItem value="4">Urgente</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>ID do Usuário</Label>
+                        <Input
+                          value={createForm.userId}
+                          onChange={(e) => setCreateForm({ ...createForm, userId: e.target.value })}
+                          placeholder="ID do usuário"
+                          type="number"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button
+                      onClick={handleCreateNotification}
+                      disabled={creating || !createForm.title || !createForm.message || !createForm.userId}
+                    >
+                      {creating ? "Criando..." : "Criar Notificação"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={handleMarkAllAsRead}
-            disabled={markingAllAsRead || !notifications.some((n) => !n.read)}
-            variant="outline"
-          >
-            <CheckCheck className="mr-2 h-4 w-4" />
-            {markingAllAsRead ? "Marcando..." : "Marcar todas como lidas"}
-          </Button>
-          <Button className="bg-[#df0e67] hover:bg-[#df0e67]/90">
-            <Plus className="mr-2 h-4 w-4" />
-            Nova Notificação
-          </Button>
-        </div>
+        <div className="absolute inset-0 bg-black/10" />
       </div>
 
-      {/* Stats Cards */}
       {stats && (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="shadow-sm border-none bg-gradient-to-b from-muted/30 to-background hover:from-muted/40 transition-colors">
-            <CardContent className="py-4">
+          <Card className="border-none shadow-lg bg-gradient-to-br from-blue-50 to-blue-100/50">
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
-                <div className="text-xs uppercase tracking-wide text-muted-foreground">Total</div>
-                <Bell className="h-4 w-4 opacity-60" />
+                <div>
+                  <p className="text-sm font-medium text-blue-600">Total de Notificações</p>
+                  <p className="text-3xl font-bold text-blue-900">{stats.total}</p>
+                  <p className="text-xs text-blue-600/70">+2 este mês</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-blue-500/20 flex items-center justify-center">
+                  <Bell className="h-6 w-6 text-blue-600" />
+                </div>
               </div>
-              <div className="mt-1 text-2xl font-semibold">{stats.total}</div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm border-none bg-gradient-to-b from-muted/30 to-background hover:from-muted/40 transition-colors">
-            <CardContent className="py-4">
+          <Card className="border-none shadow-lg bg-gradient-to-br from-red-50 to-red-100/50">
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
-                <div className="text-xs uppercase tracking-wide text-muted-foreground">Não Lidas</div>
-                <Zap className="h-4 w-4 opacity-60 text-[#df0e67]" />
+                <div>
+                  <p className="text-sm font-medium text-red-600">Não Lidas</p>
+                  <p className="text-3xl font-bold text-red-900">{stats.unread}</p>
+                  <p className="text-xs text-red-600/70">Requer atenção</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-red-500/20 flex items-center justify-center">
+                  <Zap className="h-6 w-6 text-red-600" />
+                </div>
               </div>
-              <div className="mt-1 text-2xl font-semibold text-[#df0e67]">{stats.unread}</div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm border-none bg-gradient-to-b from-muted/30 to-background hover:from-muted/40 transition-colors">
-            <CardContent className="py-4">
+          <Card className="border-none shadow-lg bg-gradient-to-br from-green-50 to-green-100/50">
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
-                <div className="text-xs uppercase tracking-wide text-muted-foreground">Taxa de Leitura</div>
-                <TrendingUp className="h-4 w-4 opacity-60" />
+                <div>
+                  <p className="text-sm font-medium text-green-600">Taxa de Leitura</p>
+                  <p className="text-3xl font-bold text-green-900">{Math.round(stats.readRate)}%</p>
+                  <p className="text-xs text-green-600/70">Engajamento</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-green-500/20 flex items-center justify-center">
+                  <TrendingUp className="h-6 w-6 text-green-600" />
+                </div>
               </div>
-              <div className="mt-1 text-2xl font-semibold">{Math.round(stats.readRate)}%</div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm border-none bg-gradient-to-b from-muted/30 to-background hover:from-muted/40 transition-colors">
-            <CardContent className="py-4">
+          <Card className="border-none shadow-lg bg-gradient-to-br from-orange-50 to-orange-100/50">
+            <CardContent className="p-6">
               <div className="flex items-center justify-between">
-                <div className="text-xs uppercase tracking-wide text-muted-foreground">Tempo Médio</div>
-                <Clock className="h-4 w-4 opacity-60" />
+                <div>
+                  <p className="text-sm font-medium text-orange-600">Tempo Médio</p>
+                  <p className="text-3xl font-bold text-orange-900">{Math.round(stats.averageReadTime)}min</p>
+                  <p className="text-xs text-orange-600/70">Para leitura</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-orange-500/20 flex items-center justify-center">
+                  <Clock className="h-6 w-6 text-orange-600" />
+                </div>
               </div>
-              <div className="mt-1 text-2xl font-semibold">{Math.round(stats.averageReadTime)}min</div>
             </CardContent>
           </Card>
         </div>
       )}
 
-      {/* Filtros */}
       <Card className="border-none shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -428,7 +641,6 @@ export default function AdminNotificationsPage() {
         </CardContent>
       </Card>
 
-      {/* Lista de Notificações */}
       <Card className="border-none shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Lista de Notificações</CardTitle>

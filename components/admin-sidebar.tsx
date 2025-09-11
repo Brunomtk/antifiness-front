@@ -19,6 +19,7 @@ import {
   X,
   LogOut,
   Bell,
+  UserCog,
 } from "lucide-react"
 import { useUserContext } from "@/contexts/user-context"
 import { useRouter } from "next/navigation"
@@ -27,6 +28,7 @@ import Image from "next/image"
 const navigation = [
   { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { name: "Clientes", href: "/admin/clients", icon: Users },
+  { name: "Usuários", href: "/admin/users", icon: UserCog }, // Added users management menu item
   { name: "Planos", href: "/admin/plans", icon: Calendar },
   { name: "Dietas", href: "/admin/diets", icon: UtensilsCrossed },
   { name: "Treinos", href: "/admin/workouts", icon: Dumbbell },

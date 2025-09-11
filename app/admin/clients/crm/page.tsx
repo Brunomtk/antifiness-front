@@ -289,8 +289,8 @@ export default function CRMPage() {
                   >
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3 flex-1">
-                          <Avatar className="h-10 w-10">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <Avatar className="h-10 w-10 flex-shrink-0">
                             <AvatarImage
                               src={
                                 client.avatar ||
@@ -306,20 +306,20 @@ export default function CRMPage() {
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-sm whitespace-normal break-words leading-tight">{client.name}</h4>
+                            <h4 className="font-medium text-sm truncate leading-tight">{client.name}</h4>
                             <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                              <Mail className="h-3 w-3" />
-                              <span className="whitespace-normal break-words">{client.email}</span>
+                              <Mail className="h-3 w-3 flex-shrink-0" />
+                              <span className="truncate">{client.email}</span>
                             </div>
                             <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <Phone className="h-3 w-3" />
-                              <span>{client.phone}</span>
+                              <Phone className="h-3 w-3 flex-shrink-0" />
+                              <span className="truncate">{client.phone}</span>
                             </div>
                           </div>
                         </div>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 flex-shrink-0">
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -371,20 +371,25 @@ export default function CRMPage() {
                       {/* Peso atual vs meta */}
                       {client.currentWeight && client.targetWeight && (
                         <div className="mt-3 p-2 bg-gray-50 rounded text-xs">
-                          <div className="flex justify-between">
-                            <span>Peso atual: {client.currentWeight}kg</span>
-                            <span>Meta: {client.targetWeight}kg</span>
+                          <div className="flex justify-between mb-1">
+                            <span className="font-medium">Peso atual:</span>
+                            <span className="font-bold">{client.currentWeight}kg</span>
                           </div>
-                          <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                          <div className="flex justify-between mb-2">
+                            <span className="font-medium">Meta:</span>
+                            <span className="font-bold">{client.targetWeight}kg</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
                             <div
-                              className="bg-primary h-1.5 rounded-full"
+                              className="bg-primary h-2 rounded-full transition-all duration-300"
                               style={{
                                 width: `${Math.min(
                                   100,
-                                  Math.abs(
-                                    ((client.currentWeight - client.targetWeight) /
-                                      (client.currentWeight - client.targetWeight)) *
-                                      100,
+                                  Math.max(
+                                    0,
+                                    (Math.abs(client.currentWeight - client.targetWeight) /
+                                      Math.abs(client.currentWeight - client.targetWeight)) *
+                                      100 || 0,
                                   ),
                                 )}%`,
                               }}
@@ -466,14 +471,15 @@ export default function CRMPage() {
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                       <div
-                        className="bg-primary h-2 rounded-full"
+                        className="bg-primary h-2 rounded-full transition-all duration-300"
                         style={{
                           width: `${Math.min(
                             100,
-                            Math.abs(
-                              ((selectedClient.currentWeight - selectedClient.targetWeight) /
-                                (selectedClient.currentWeight - selectedClient.targetWeight)) *
-                                100,
+                            Math.max(
+                              0,
+                              (Math.abs(selectedClient.currentWeight - selectedClient.targetWeight) /
+                                Math.abs(selectedClient.currentWeight - selectedClient.targetWeight)) *
+                                100 || 0,
                             ),
                           )}%`,
                         }}

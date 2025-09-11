@@ -14,18 +14,9 @@ import type {
   UpdateEnrollmentData,
   CreateReviewData,
 } from "@/types/course"
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://localhost:44394/api"
+import { api } from "@/lib/api"
 
 class CourseService {
-  private async getAuthHeaders() {
-    const token = localStorage.getItem("authToken")
-    return {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    }
-  }
-
   // Course CRUD operations
   async getCourses(filters?: CourseFilters): Promise<CoursesResponse> {
     const params = new URLSearchParams()
@@ -38,144 +29,57 @@ class CourseService {
       })
     }
 
-    const response = await fetch(`${API_BASE_URL}/Course?${params}`, {
-      headers: await this.getAuthHeaders(),
-    })
-
-    if (!response.ok) {
-      throw new Error("Erro ao buscar cursos")
-    }
-
-    return response.json()
+    const response = await api.get(`/Course?${params}`)
+    return response.data
   }
 
   async getCourse(id: number): Promise<Course> {
-    const response = await fetch(`${API_BASE_URL}/Course/${id}`, {
-      headers: await this.getAuthHeaders(),
-    })
-
-    if (!response.ok) {
-      throw new Error("Erro ao buscar curso")
-    }
-
-    return response.json()
+    const response = await api.get(`/Course/${id}`)
+    return response.data
   }
 
   async createCourse(data: CreateCourseData): Promise<Course> {
-    const response = await fetch(`${API_BASE_URL}/Course`, {
-      method: "POST",
-      headers: await this.getAuthHeaders(),
-      body: JSON.stringify(data),
-    })
-
-    if (!response.ok) {
-      throw new Error("Erro ao criar curso")
-    }
-
-    return response.json()
+    const response = await api.post("/Course", data)
+    return response.data
   }
 
   async updateCourse(id: number, data: UpdateCourseData): Promise<Course> {
-    const response = await fetch(`${API_BASE_URL}/Course/${id}`, {
-      method: "PUT",
-      headers: await this.getAuthHeaders(),
-      body: JSON.stringify(data),
-    })
-
-    if (!response.ok) {
-      throw new Error("Erro ao atualizar curso")
-    }
-
-    return response.json()
+    const response = await api.put(`/Course/${id}`, data)
+    return response.data
   }
 
   async deleteCourse(id: number): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/Course/${id}`, {
-      method: "DELETE",
-      headers: await this.getAuthHeaders(),
-    })
-
-    if (!response.ok) {
-      throw new Error("Erro ao deletar curso")
-    }
+    await api.delete(`/Course/${id}`)
   }
 
   async publishCourse(id: number): Promise<{ message: string }> {
-    const response = await fetch(`${API_BASE_URL}/Course/${id}/publish`, {
-      method: "POST",
-      headers: await this.getAuthHeaders(),
-      body: "",
-    })
-
-    if (!response.ok) {
-      throw new Error("Erro ao publicar curso")
-    }
-
-    return response.json()
+    const response = await api.post(`/Course/${id}/publish`, "")
+    return response.data
   }
 
   // Lesson operations
   async getLessons(courseId: number): Promise<CourseLesson[]> {
-    const response = await fetch(`${API_BASE_URL}/Course/${courseId}/lessons`, {
-      headers: await this.getAuthHeaders(),
-    })
-
-    if (!response.ok) {
-      throw new Error("Erro ao buscar aulas")
-    }
-
-    return response.json()
+    const response = await api.get(`/Course/${courseId}/lessons`)
+    return response.data
   }
 
   async getLesson(courseId: number, lessonId: number): Promise<CourseLesson> {
-    const response = await fetch(`${API_BASE_URL}/Course/${courseId}/lessons/${lessonId}`, {
-      headers: await this.getAuthHeaders(),
-    })
-
-    if (!response.ok) {
-      throw new Error("Erro ao buscar aula")
-    }
-
-    return response.json()
+    const response = await api.get(`/Course/${courseId}/lessons/${lessonId}`)
+    return response.data
   }
 
   async createLesson(courseId: number, data: CreateLessonData): Promise<CourseLesson> {
-    const response = await fetch(`${API_BASE_URL}/Course/${courseId}/lessons`, {
-      method: "POST",
-      headers: await this.getAuthHeaders(),
-      body: JSON.stringify(data),
-    })
-
-    if (!response.ok) {
-      throw new Error("Erro ao criar aula")
-    }
-
-    return response.json()
+    const response = await api.post(`/Course/${courseId}/lessons`, data)
+    return response.data
   }
 
   async updateLesson(courseId: number, lessonId: number, data: UpdateLessonData): Promise<CourseLesson> {
-    const response = await fetch(`${API_BASE_URL}/Course/${courseId}/lessons/${lessonId}`, {
-      method: "PUT",
-      headers: await this.getAuthHeaders(),
-      body: JSON.stringify(data),
-    })
-
-    if (!response.ok) {
-      throw new Error("Erro ao atualizar aula")
-    }
-
-    return response.json()
+    const response = await api.put(`/Course/${courseId}/lessons/${lessonId}`, data)
+    return response.data
   }
 
   async deleteLesson(courseId: number, lessonId: number): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/Course/${courseId}/lessons/${lessonId}`, {
-      method: "DELETE",
-      headers: await this.getAuthHeaders(),
-    })
-
-    if (!response.ok) {
-      throw new Error("Erro ao deletar aula")
-    }
+    await api.delete(`/Course/${courseId}/lessons/${lessonId}`)
   }
 
   // Enrollment operations
@@ -192,107 +96,45 @@ class CourseService {
       })
     }
 
-    const response = await fetch(`${API_BASE_URL}/Enrollment?${params}`, {
-      headers: await this.getAuthHeaders(),
-    })
-
-    if (!response.ok) {
-      throw new Error("Erro ao buscar inscrições")
-    }
-
-    return response.json()
+    const response = await api.get(`/Enrollment?${params}`)
+    return response.data
   }
 
   async getEnrollment(id: number): Promise<CourseEnrollment> {
-    const response = await fetch(`${API_BASE_URL}/Enrollment/${id}`, {
-      headers: await this.getAuthHeaders(),
-    })
-
-    if (!response.ok) {
-      throw new Error("Erro ao buscar inscrição")
-    }
-
-    return response.json()
+    const response = await api.get(`/Enrollment/${id}`)
+    return response.data
   }
 
   async createEnrollment(data: CreateEnrollmentData): Promise<CourseEnrollment> {
-    const response = await fetch(`${API_BASE_URL}/Enrollment`, {
-      method: "POST",
-      headers: await this.getAuthHeaders(),
-      body: JSON.stringify(data),
-    })
-
-    if (!response.ok) {
-      throw new Error("Erro ao criar inscrição")
-    }
-
-    return response.json()
+    const response = await api.post("/Enrollment", data)
+    return response.data
   }
 
   async updateEnrollment(id: number, data: UpdateEnrollmentData): Promise<CourseEnrollment> {
-    const response = await fetch(`${API_BASE_URL}/Enrollment/${id}`, {
-      method: "PUT",
-      headers: await this.getAuthHeaders(),
-      body: JSON.stringify(data),
-    })
-
-    if (!response.ok) {
-      throw new Error("Erro ao atualizar inscrição")
-    }
-
-    return response.json()
+    const response = await api.put(`/Enrollment/${id}`, data)
+    return response.data
   }
 
   // Review operations
   async getReviews(courseId: number): Promise<CourseReview[]> {
-    const response = await fetch(`${API_BASE_URL}/Course/${courseId}/reviews`, {
-      headers: await this.getAuthHeaders(),
-    })
-
-    if (!response.ok) {
-      throw new Error("Erro ao buscar avaliações")
-    }
-
-    return response.json()
+    const response = await api.get(`/Course/${courseId}/reviews`)
+    return response.data
   }
 
   async createReview(courseId: number, data: CreateReviewData): Promise<CourseReview> {
-    const response = await fetch(`${API_BASE_URL}/Course/${courseId}/reviews`, {
-      method: "POST",
-      headers: await this.getAuthHeaders(),
-      body: JSON.stringify(data),
-    })
-
-    if (!response.ok) {
-      throw new Error("Erro ao criar avaliação")
-    }
-
-    return response.json()
+    const response = await api.post(`/Course/${courseId}/reviews`, data)
+    return response.data
   }
 
   // Statistics
   async getStats(): Promise<CourseStats> {
-    const response = await fetch(`${API_BASE_URL}/Course/stats`, {
-      headers: await this.getAuthHeaders(),
-    })
-
-    if (!response.ok) {
-      throw new Error("Erro ao buscar estatísticas")
-    }
-
-    return response.json()
+    const response = await api.get("/Course/stats")
+    return response.data
   }
 
   async getCourseStats(courseId: number): Promise<CourseStats> {
-    const response = await fetch(`${API_BASE_URL}/Course/${courseId}/stats`, {
-      headers: await this.getAuthHeaders(),
-    })
-
-    if (!response.ok) {
-      throw new Error("Erro ao buscar estatísticas do curso")
-    }
-
-    return response.json()
+    const response = await api.get(`/Course/${courseId}/stats`)
+    return response.data
   }
 }
 

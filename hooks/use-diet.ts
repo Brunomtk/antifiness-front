@@ -262,41 +262,37 @@ export function useDietMeals() {
     }
   }, [])
 
-  
-  const completeMeal = useCallback(async (mealId: number) => {
-    setUpdating(true)
-    setError(null)
+  const completeMeal = useCallback(
+    async (mealId: number) => {
+      setUpdating(true)
+      setError(null)
 
-    try {
-      const meal = meals.find((m) => m.id === mealId)
-      if (!meal) {
-        setError("Refeição não encontrada nesta dieta.")
-        toast.error("Refeição não encontrada nesta dieta.")
-        throw new Error("MEAL_NOT_FOUND_LOCAL")
-      }
-      if (!diet || meal.dietId !== diet.id) {
-        setError("Refeição não pertence à dieta atual.")
-        toast.error("Refeição não pertence à dieta atual.")
-        throw new Error("MEAL_NOT_IN_CURRENT_DIET")
-      }
+      try {
+        const meal = meals.find((m) => m.id === mealId)
+        if (!meal) {
+          setError("Refeição não encontrada nesta dieta.")
+          toast.error("Refeição não encontrada nesta dieta.")
+          throw new Error("MEAL_NOT_FOUND_LOCAL")
+        }
 
-      await dietService.completeMeal(mealId)
-      setMeals((prev) =>
-        prev.map((m) => (m.id === mealId ? { ...m, isCompleted: true, completedAt: new Date().toISOString() } : m)),
-      )
-      toast.success("Refeição marcada como concluída!")
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Erro ao completar refeição"
-      setError(errorMessage)
-      if (errorMessage !== "MEAL_NOT_FOUND_LOCAL" && errorMessage !== "MEAL_NOT_IN_CURRENT_DIET") {
-        toast.error(errorMessage)
+        await dietService.completeMeal(mealId)
+        setMeals((prev) =>
+          prev.map((m) => (m.id === mealId ? { ...m, isCompleted: true, completedAt: new Date().toISOString() } : m)),
+        )
+        toast.success("Refeição marcada como concluída!")
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "Erro ao completar refeição"
+        setError(errorMessage)
+        if (errorMessage !== "MEAL_NOT_FOUND_LOCAL") {
+          toast.error(errorMessage)
+        }
+        throw err
+      } finally {
+        setUpdating(false)
       }
-      throw err
-    } finally {
-      setUpdating(false)
-    }
-  }, [meals])
-
+    },
+    [meals],
+  )
 
   return {
     meals,
@@ -363,3 +359,5 @@ export function useDietProgress() {
     addProgress,
   }
 }
+
+export const useDiet = useDiets

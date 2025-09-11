@@ -39,7 +39,6 @@ import {
   getWorkoutStatusLabel,
   getWorkoutMoodLabel,
 } from "@/types/workout"
-import NotificationDropdown from "@/components/notification-dropdown"
 
 export default function ClientWorkout() {
   const isMobile = useMobile()
@@ -166,7 +165,6 @@ export default function ClientWorkout() {
               <p className="text-xs text-gray-600 md:text-base">Acompanhe seus exercícios e progresso</p>
             </div>
             <div className="flex items-center gap-2">
-              <NotificationDropdown />
               <Button variant="outline" size="sm" onClick={refreshAll} className="h-8 w-8 p-0 bg-transparent">
                 <RefreshCw className="h-4 w-4" />
               </Button>

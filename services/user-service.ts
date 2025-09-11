@@ -24,7 +24,7 @@ export class UserService {
 
   static async createUser(data: CreateUserData): Promise<ApiResponse> {
     try {
-      const response = await api.post<ApiResponse>("/Users", data)
+      const response = await api.post<ApiResponse>("/Users/create", data)
       return response.data
     } catch (error) {
       console.error("Erro ao criar usuário:", error)
@@ -57,6 +57,57 @@ export class UserService {
     } catch (error) {
       console.error("Erro ao fazer upload do avatar:", error)
       throw new Error("Falha ao fazer upload da imagem")
+    }
+  }
+
+  static async getUsers(params?: {
+    role?: string
+    status?: string
+    search?: string
+    page?: number
+    pageSize?: number
+  }): Promise<{ users: User[]; totalPages: number; totalUsers: number }> {
+    try {
+      const searchParams = new URLSearchParams()
+      if (params?.role) searchParams.append("role", params.role)
+      if (params?.status) searchParams.append("status", params.status)
+      if (params?.search) searchParams.append("search", params.search)
+      if (params?.page) searchParams.append("page", params.page.toString())
+      if (params?.pageSize) searchParams.append("pageSize", params.pageSize.toString())
+
+      const response = await api.get<User[]>(`/Users?${searchParams.toString()}`)
+      const users = response.data
+
+      // Calculate pagination (assuming API returns all results for now)
+      const totalUsers = users.length
+      const pageSize = params?.pageSize || 10
+      const totalPages = Math.ceil(totalUsers / pageSize)
+
+      return { users, totalPages, totalUsers }
+    } catch (error) {
+      console.error("Erro ao buscar usuários:", error)
+      throw new Error("Falha ao buscar usuários")
+    }
+  }
+
+  static async getUserStats(): Promise<{
+    totalUsers: number
+    totalAdmins: number
+    totalClients: number
+    activeUsers: number
+    inactiveUsers: number
+    pendingUsers: number
+    newUsersThisMonth: number
+    verifiedAdmins: number
+    clientsWithNutritionist: number
+    growthPercentage: number
+  }> {
+    try {
+      const response = await api.get("/Users/stats")
+      return response.data
+    } catch (error) {
+      console.error("Erro ao buscar estatísticas de usuários:", error)
+      throw new Error("Falha ao buscar estatísticas")
     }
   }
 }

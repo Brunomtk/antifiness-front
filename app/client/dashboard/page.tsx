@@ -24,7 +24,6 @@ import {
 import { useMobile } from "@/hooks/use-mobile"
 import { useUser } from "@/hooks/use-user"
 import { useClientDashboard } from "@/hooks/use-client-dashboard"
-import NotificationDropdown from "@/components/notification-dropdown"
 
 export default function ClientDashboard() {
   const isMobile = useMobile()
@@ -197,7 +196,6 @@ export default function ClientDashboard() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              {!isMobile && <NotificationDropdown />}
               <Button variant="ghost" size="sm" onClick={handleRefresh} className="h-8 w-8 p-0">
                 <RefreshCw className="h-4 w-4" />
               </Button>

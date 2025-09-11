@@ -28,7 +28,6 @@ export default function ClientsPage() {
   })
   const [openFilters, setOpenFilters] = React.useState(false)
 
-
   const fetchData = async () => {
     try {
       setLoading(true)
@@ -50,23 +49,30 @@ export default function ClientsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-  <div>
-    <h1 className="text-3xl font-bold tracking-tight">Clientes</h1>
-    <p className="text-muted-foreground">Gerencie seus clientes, status e permissões.</p>
-  </div>
-  <Button asChild className="bg-green-600 hover:bg-green-700">
-    <Link href="/admin/clients/create">
-      <Plus className="mr-2 h-4 w-4" /> Novo Cliente
-    </Link>
-  </Button>
-</div>
-
-      <div className="flex items-center justify-end">
-        <Button asChild variant="outline"><Link href="/admin/clients/crm">Abrir CRM</Link></Button>
+      {/* Header with gradient background */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 p-6 text-white">
+        <div className="absolute inset-0 bg-black/10" />
+        <div className="relative flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Clientes</h1>
+            <p className="text-blue-100">Gerencie seus clientes, status e permissões</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="secondary" asChild>
+              <Link href="/admin/clients/crm">Abrir CRM</Link>
+            </Button>
+            <Button asChild className="bg-white text-blue-700 hover:bg-blue-50">
+              <Link href="/admin/clients/create">
+                <Plus className="mr-2 h-4 w-4" /> Novo Cliente
+              </Link>
+            </Button>
+          </div>
+        </div>
       </div>
+
       <StatsCards />
-      <ClientTable hideCreateButton
+      <ClientTable
+        hideCreateButton
         items={items}
         loading={loading}
         onRefresh={fetchData}
@@ -81,8 +87,22 @@ export default function ClientsPage() {
         open={openFilters}
         onOpenChange={setOpenFilters}
         value={filters}
-        onApply={(q) => { setFilters(q as any); setOpenFilters(false); setPage(1); }}
-        onClear={() => { setFilters({ status: undefined, kanbanStage: undefined, activityLevel: undefined, orderBy: "name", orderDirection: "asc", startDate: "", endDate: "" } as any); }}
+        onApply={(q) => {
+          setFilters(q as any)
+          setOpenFilters(false)
+          setPage(1)
+        }}
+        onClear={() => {
+          setFilters({
+            status: undefined,
+            kanbanStage: undefined,
+            activityLevel: undefined,
+            orderBy: "name",
+            orderDirection: "asc",
+            startDate: "",
+            endDate: "",
+          } as any)
+        }}
       />
     </div>
   )

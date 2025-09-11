@@ -1,33 +1,5 @@
 import type { ApiFood, CreateFoodRequest, UpdateFoodRequest, FoodFilters } from "@/types/food"
-
-const API_BASE_URL = "https://localhost:44394/api"
-
-// Função para obter token de autenticação
-const getAuthToken = () => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("auth_token") || ""
-  }
-  return ""
-}
-
-// Headers padrão para requisições
-const getHeaders = () => ({
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${getAuthToken()}`,
-  accept: "*/*",
-})
-
-// Função para tratar erros de autenticação
-const handleAuthError = (response: Response) => {
-  if (response.status === 401) {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("auth_token")
-      localStorage.removeItem("user_data")
-      window.location.href = "/login"
-    }
-    throw new Error("Sessão expirada. Faça login novamente.")
-  }
-}
+import { api } from "@/lib/api"
 
 class FoodService {
   // CRUD Alimentos
@@ -37,85 +9,29 @@ class FoodService {
     if (filters.search) params.append("search", filters.search)
     if (filters.category !== undefined) params.append("category", filters.category.toString())
 
-    const url = `${API_BASE_URL}/Food${params.toString() ? `?${params.toString()}` : ""}`
+    const queryString = params.toString() ? `?${params.toString()}` : ""
 
-    const response = await fetch(url, {
-      method: "GET",
-      headers: getHeaders(),
-    })
-
-    handleAuthError(response)
-
-    if (!response.ok) {
-      throw new Error(`Erro ao buscar alimentos: ${response.status}`)
-    }
-
-    // A API retorna diretamente um array, não um objeto paginado
-    return response.json()
+    const response = await api.get(`/Food${queryString}`)
+    return response.data
   }
 
   async getFoodById(id: number): Promise<ApiFood> {
-    const response = await fetch(`${API_BASE_URL}/Food/${id}`, {
-      method: "GET",
-      headers: getHeaders(),
-    })
-
-    handleAuthError(response)
-
-    if (!response.ok) {
-      throw new Error(`Erro ao buscar alimento: ${response.status}`)
-    }
-
-    return response.json()
+    const response = await api.get(`/Food/${id}`)
+    return response.data
   }
 
   async createFood(data: CreateFoodRequest): Promise<ApiFood> {
-    const response = await fetch(`${API_BASE_URL}/Food`, {
-      method: "POST",
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    })
-
-    handleAuthError(response)
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      console.error("Erro na criação do alimento:", errorData)
-      throw new Error(`Erro ao criar alimento: ${response.status}`)
-    }
-
-    return response.json()
+    const response = await api.post("/Food", data)
+    return response.data
   }
 
   async updateFood(id: number, data: UpdateFoodRequest): Promise<ApiFood> {
-    const response = await fetch(`${API_BASE_URL}/Food/${id}`, {
-      method: "PUT",
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    })
-
-    handleAuthError(response)
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      console.error("Erro na atualização do alimento:", errorData)
-      throw new Error(`Erro ao atualizar alimento: ${response.status}`)
-    }
-
-    return response.json()
+    const response = await api.put(`/Food/${id}`, data)
+    return response.data
   }
 
   async deleteFood(id: number): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/Food/${id}`, {
-      method: "DELETE",
-      headers: getHeaders(),
-    })
-
-    handleAuthError(response)
-
-    if (!response.ok) {
-      throw new Error(`Erro ao excluir alimento: ${response.status}`)
-    }
+    await api.delete(`/Food/${id}`)
   }
 
   // Busca avançada
@@ -132,6 +48,18 @@ class FoodService {
   async getActiveFoods(): Promise<ApiFood[]> {
     const foods = await this.getFoods()
     return foods.filter((food) => food.isActive)
+  }
+
+  getFoodCategoryOptions() {
+    return [
+      { value: 1, label: "Carboidratos", icon: "🍞", color: "bg-amber-100 text-amber-800" },
+      { value: 2, label: "Proteínas", icon: "🥩", color: "bg-red-100 text-red-800" },
+      { value: 3, label: "Gorduras", icon: "🥑", color: "bg-green-100 text-green-800" },
+      { value: 4, label: "Vegetais", icon: "🥬", color: "bg-emerald-100 text-emerald-800" },
+      { value: 5, label: "Frutas", icon: "🍎", color: "bg-pink-100 text-pink-800" },
+      { value: 6, label: "Laticínios", icon: "🥛", color: "bg-blue-100 text-blue-800" },
+      { value: 7, label: "Outros", icon: "🍽️", color: "bg-gray-100 text-gray-800" },
+    ]
   }
 }
 

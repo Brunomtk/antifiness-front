@@ -226,7 +226,7 @@ export function useNotificationOperations() {
     const data: CreateNotificationData = {
       userId,
       type: NotificationType.REMINDER,
-      category: NotificationCategory.REMINDER,
+      category: NotificationCategory.INFO,
       title: "Hora do Treino! 💪",
       message: `Está na hora do seu treino: ${workoutName}`,
       priority: NotificationPriority.HIGH,
@@ -330,3 +330,5 @@ export function useRealTimeNotifications() {
     startRealTimeUpdates,
   }
 }
+
+export const useNotification = useNotifications

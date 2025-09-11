@@ -43,7 +43,6 @@ import {
   getFeedbackStatusLabel,
   type Feedback,
 } from "@/types/feedback"
-import NotificationDropdown from "@/components/notification-dropdown"
 
 export default function ClientFeedbacks() {
   const isMobile = useMobile()
@@ -165,7 +164,6 @@ export default function ClientFeedbacks() {
               <RefreshCw className={`mr-1 h-3 w-3 ${loading.feedbacks ? "animate-spin" : ""}`} />
               {isMobile ? "" : "Atualizar"}
             </Button>
-            {!isMobile && <NotificationDropdown />}
           </div>
         </div>
 

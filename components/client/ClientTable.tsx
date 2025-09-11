@@ -23,9 +23,8 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { clientService } from "@/services/client-service"
 import type { Client } from "@/types/client"
-import { Eye, Pencil, Trash, RefreshCcw, Plus, Filter, History } from "lucide-react"
+import { Eye, Pencil, Trash, RefreshCcw, Plus, Filter } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
-import HistoryDialog from "@/components/client/HistoryDialog"
 
 export type ClientTableProps = {
   items: Client[]
@@ -61,8 +60,6 @@ export default function ClientTable({
   const { toast } = useToast()
   const [deleteTarget, setDeleteTarget] = React.useState<Client | null>(null)
   const [deleting, setDeleting] = React.useState(false)
-  const [historyId, setHistoryId] = React.useState<number | null>(null)
-  const [openHistory, setOpenHistory] = React.useState(false)
 
   const confirmDelete = async () => {
     if (!deleteTarget) return
@@ -220,23 +217,6 @@ export default function ClientTable({
 
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                setHistoryId(c.id)
-                                setOpenHistory(true)
-                              }}
-                              className="h-8 w-8 hover:bg-purple-100 hover:text-purple-600 transition-colors"
-                            >
-                              <History className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Ver histórico</TooltipContent>
-                        </Tooltip>
-
-                        <Tooltip>
-                          <TooltipTrigger asChild>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button
@@ -319,9 +299,6 @@ export default function ClientTable({
             </div>
           </div>
         </CardContent>
-
-        {/* Histórico Dialog */}
-        <HistoryDialog clientId={historyId} open={openHistory} onOpenChange={setOpenHistory} />
       </Card>
     </TooltipProvider>
   )

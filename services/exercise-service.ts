@@ -1,7 +1,13 @@
 "use client"
 
 import { api } from "@/lib/api"
-import type { Exercise, ExercisesQuery, ExercisesPage, CreateExerciseRequest, UpdateExerciseRequest } from "@/types/exercise"
+import type {
+  Exercise,
+  ExercisesQuery,
+  ExercisesPage,
+  CreateExerciseRequest,
+  UpdateExerciseRequest,
+} from "@/types/exercise"
 
 const base = "/Exercise"
 
@@ -39,12 +45,16 @@ class ExerciseService {
   }
 
   async create(payload: CreateExerciseRequest): Promise<Exercise> {
-    const { data } = await api.post<Exercise>(base, payload, { headers: { "Content-Type": "application/json", Accept: "text/plain" } })
+    const { data } = await api.post<Exercise>(base, payload, {
+      headers: { "Content-Type": "application/json", Accept: "text/plain" },
+    })
     return data
   }
 
   async update(id: number, payload: UpdateExerciseRequest): Promise<Exercise> {
-    const { data } = await api.put<Exercise>(`${base}/${id}`, payload, { headers: { "Content-Type": "application/json", Accept: "text/plain" } })
+    const { data } = await api.put<Exercise>(`${base}/${id}`, payload, {
+      headers: { "Content-Type": "application/json", Accept: "text/plain" },
+    })
     return data
   }
 
@@ -54,3 +64,7 @@ class ExerciseService {
 }
 
 export const exerciseService = new ExerciseService()
+
+export const validateExercise = (exercise: any): boolean => {
+  return !!(exercise.name && exercise.description && exercise.muscleGroups)
+}
