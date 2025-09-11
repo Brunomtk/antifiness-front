@@ -98,7 +98,20 @@ export default function UsersPage() {
 
   const handleCreateUser = async () => {
     try {
-      await createUser(newUser)
+      const userData = {
+        name: newUser.name,
+        username: newUser.username,
+        email: newUser.email,
+        password: newUser.password,
+        type: newUser.type,
+        status: newUser.status,
+        phone: newUser.phone,
+        avatar: newUser.avatar || "string",
+        clientId: newUser.clientId || null,
+        empresaId: newUser.empresaId || 1,
+      }
+
+      await createUser(userData)
       setNewUser({
         name: "",
         username: "",

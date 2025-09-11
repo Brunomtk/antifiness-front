@@ -1,15 +1,15 @@
 import DietDetailsPage from "./DietDetailsPage"
 
 export async function generateStaticParams() {
-  // The actual data fetching will happen at runtime on the client side
-  return []
+  // Return at least one valid parameter set for static export
+  return [{ id: "1" }, { id: "2" }, { id: "3" }]
 }
 
 interface PageProps {
-  params: Promise<{ id: string }>
+  params: { id: string }
 }
 
 export default async function Page({ params }: PageProps) {
-  const { id } = await params
+  const { id } = params
   return <DietDetailsPage dietId={id} />
 }

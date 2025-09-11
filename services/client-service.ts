@@ -40,7 +40,7 @@ class ClientService {
     if (q.startDate) params.startDate = q.startDate
     if (q.endDate) params.endDate = q.endDate
 
-    const { data } = await api.get<PagedResult<Client>>(base, { params })
+    const { data } = await api.get<PagedResult<Client>>("/Client", { params })
     return data
   }
 
@@ -85,21 +85,42 @@ class ClientService {
   }
 
   async postWeight(clientId: number, payload: { date: string; weight: number; notes?: string }): Promise<any> {
-    const { data } = await api.post(`${base}/${clientId}/progress/weight`, payload, { headers: { Accept: "text/plain" } })
+    const { data } = await api.post(`${base}/${clientId}/progress/weight`, payload, {
+      headers: { Accept: "text/plain" },
+    })
     return data
   }
 
-  async postMeasurements(clientId: number, payload: { date: string; bodyFat?: number; muscleMass?: number; waist?: number; chest?: number; arms?: number; thighs?: number; notes?: string }): Promise<any> {
-    const { data } = await api.post(`${base}/${clientId}/progress/measurements`, payload, { headers: { Accept: "text/plain" } })
+  async postMeasurements(
+    clientId: number,
+    payload: {
+      date: string
+      bodyFat?: number
+      muscleMass?: number
+      waist?: number
+      chest?: number
+      arms?: number
+      thighs?: number
+      notes?: string
+    },
+  ): Promise<any> {
+    const { data } = await api.post(`${base}/${clientId}/progress/measurements`, payload, {
+      headers: { Accept: "text/plain" },
+    })
     return data
   }
 
   async postPhoto(clientId: number, payload: { date: string; image: string; notes?: string }): Promise<any> {
-    const { data } = await api.post(`${base}/${clientId}/progress/photos`, payload, { headers: { Accept: "text/plain" } })
+    const { data } = await api.post(`${base}/${clientId}/progress/photos`, payload, {
+      headers: { Accept: "text/plain" },
+    })
     return data
   }
 
-  async postAchievement(clientId: number, payload: { title: string; description?: string; type?: string; category?: string }): Promise<any> {
+  async postAchievement(
+    clientId: number,
+    payload: { title: string; description?: string; type?: string; category?: string },
+  ): Promise<any> {
     const { data } = await api.post(`${base}/${clientId}/achievements`, payload, { headers: { Accept: "text/plain" } })
     return data
   }
@@ -127,34 +148,54 @@ class ClientService {
     return data ?? []
   }
 
-
   // Alias compatível com hooks existentes
-  async getClients(filters: ClientsQuery & { empresaId?: number | string; planId?: number | string }): Promise<PagedResult<Client>> {
+  async getClients(
+    filters: ClientsQuery & { empresaId?: number | string; planId?: number | string },
+  ): Promise<PagedResult<Client>> {
     // Nosso backend ignora planId; mantemos no objeto sem enviar se vazio
     const { planId, ...rest } = filters || {}
     return this.getPaged(rest)
   }
 
-
   // --- Aliases de compatibilidade com hooks antigos ---
-  async getClientById(id: number) { return this.getById(id) }
-
-  async createClient(payload: CreateClientRequest) { return this.create(payload) }
-
-  async updateClient(id: number, payload: UpdateClientRequest) { 
-    await this.update(id, payload); 
-    return { success: true } as any 
+  async getClientById(id: number) {
+    return this.getById(id)
   }
 
-  async deleteClient(id: number) { return this.remove(id) }
+  async createClient(payload: CreateClientRequest) {
+    return this.create(payload)
+  }
 
-  async getClientStats(): Promise<Record<string, any>> { return this.getStats() }
+  async updateClient(id: number, payload: UpdateClientRequest) {
+    await this.update(id, payload)
+    return { success: true } as any
+  }
+
+  async deleteClient(id: number) {
+    return this.remove(id)
+  }
+
+  async getClientStats(): Promise<Record<string, any>> {
+    return this.getStats()
+  }
 
   async addWeightProgress(clientId: number, data: { date: string; weight: number; notes?: string }) {
     return this.postWeight(clientId, data)
   }
 
-  async addMeasurementProgress(clientId: number, data: { date: string; bodyFat?: number; muscleMass?: number; waist?: number; chest?: number; arms?: number; thighs?: number; notes?: string }) {
+  async addMeasurementProgress(
+    clientId: number,
+    data: {
+      date: string
+      bodyFat?: number
+      muscleMass?: number
+      waist?: number
+      chest?: number
+      arms?: number
+      thighs?: number
+      notes?: string
+    },
+  ) {
     return this.postMeasurements(clientId, data)
   }
 
@@ -162,10 +203,12 @@ class ClientService {
     return this.postPhoto(clientId, data)
   }
 
-  async addAchievement(clientId: number, data: { title: string; description?: string; type?: string; category?: string }) {
+  async addAchievement(
+    clientId: number,
+    data: { title: string; description?: string; type?: string; category?: string },
+  ) {
     return this.postAchievement(clientId, data)
   }
-
 }
 
 export const clientService = new ClientService()

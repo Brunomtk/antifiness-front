@@ -1,15 +1,16 @@
 import ClientDetailsPage from "./ClientDetailsPage"
 
 export async function generateStaticParams() {
-  // The actual data fetching will happen at runtime on the client side
-  return []
+  // Return sample parameters for static generation
+  // In a real app, you would fetch actual client IDs from your data source
+  return [{ id: "1" }, { id: "2" }, { id: "3" }]
 }
 
 interface PageProps {
-  params: Promise<{ id: string }>
+  params: { id: string }
 }
 
 export default async function Page({ params }: PageProps) {
-  const { id } = await params
-  return <ClientDetailsPage />
+  const { id } = params
+  return <ClientDetailsPage clientId={id} />
 }

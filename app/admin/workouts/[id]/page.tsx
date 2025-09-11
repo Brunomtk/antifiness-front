@@ -1,15 +1,15 @@
 import WorkoutDetailPage from "./WorkoutDetailPage"
 
 export async function generateStaticParams() {
-  // The actual data fetching will happen at runtime on the client side
-  return []
+  // Return sample IDs for static generation - these will be the pre-built pages
+  return [{ id: "1" }, { id: "2" }, { id: "3" }, { id: "4" }, { id: "5" }]
 }
 
 interface PageProps {
-  params: Promise<{ id: string }>
+  params: { id: string }
 }
 
 export default async function Page({ params }: PageProps) {
-  const { id } = await params
-  return <WorkoutDetailPage />
+  const { id } = params
+  return <WorkoutDetailPage workoutId={id} />
 }

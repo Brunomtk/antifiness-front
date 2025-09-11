@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useParams } from "next/navigation"
 import dynamic from "next/dynamic"
 import { planService } from "@/services/plan-service"
 import type { Plan } from "@/types/plan"
@@ -10,9 +9,12 @@ import { toast } from "@/components/ui/use-toast"
 
 const PlanForm = dynamic(() => import("@/components/plan/PlanForm"), { ssr: false })
 
-export default function PlanEditPage() {
-  const params = useParams<{ id: string }>()
-  const id = Number(params?.id)
+interface PlanEditPageProps {
+  planId: string
+}
+
+export default function PlanEditPage({ planId }: PlanEditPageProps) {
+  const id = Number(planId)
   const [loading, setLoading] = useState(true)
   const [plan, setPlan] = useState<Plan | null>(null)
 
