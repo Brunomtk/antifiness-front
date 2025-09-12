@@ -37,6 +37,8 @@ import {
   Calendar,
 } from "lucide-react"
 import { useUsers } from "@/hooks/use-users"
+import { useClients } from "@/hooks/use-client"
+import { useUserContext } from "@/contexts/user-context"
 import { UserType, UserStatus, getUserTypeLabel, getUserStatusLabel } from "@/types/user"
 import type { CreateUserData, User as UserInterface } from "@/types/user"
 
@@ -54,6 +56,9 @@ export default function UsersPage() {
     updateUser,
     deleteUser,
   } = useUsers()
+
+  const { clients, fetchClients } = useClients()
+  const { state: userState } = useUserContext()
 
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedRole, setSelectedRole] = useState<string>("all")
@@ -73,16 +78,29 @@ export default function UsersPage() {
     phone: "",
     avatar: "",
     clientId: undefined,
-    empresaId: 1, // Default empresa ID
+    empresaId: userState.currentUser?.empresaId || 1,
   })
 
-  // Load users and stats on mount
+  useEffect(() => {
+    if (isCreateDialogOpen && newUser.type === UserType.CLIENT) {
+      fetchClients()
+    }
+  }, [isCreateDialogOpen, newUser.type, fetchClients])
+
+  useEffect(() => {
+    if (userState.currentUser?.empresaId) {
+      setNewUser((prev) => ({
+        ...prev,
+        empresaId: userState.currentUser.empresaId,
+      }))
+    }
+  }, [userState.currentUser])
+
   useEffect(() => {
     fetchUsers()
     fetchUserStats()
   }, [fetchUsers, fetchUserStats])
 
-  // Filter users when search or filters change
   useEffect(() => {
     const delayedSearch = setTimeout(() => {
       const params: any = {}
@@ -108,7 +126,7 @@ export default function UsersPage() {
         phone: newUser.phone,
         avatar: newUser.avatar || "string",
         clientId: newUser.clientId || null,
-        empresaId: newUser.empresaId || 1,
+        empresaId: userState.currentUser?.empresaId || 1,
       }
 
       await createUser(userData)
@@ -122,7 +140,7 @@ export default function UsersPage() {
         phone: "",
         avatar: "",
         clientId: undefined,
-        empresaId: 1,
+        empresaId: userState.currentUser?.empresaId || 1,
       })
       setIsCreateDialogOpen(false)
     } catch (error) {
@@ -262,7 +280,14 @@ export default function UsersPage() {
                     <Label htmlFor="user-type">Tipo de Usuário</Label>
                     <Select
                       value={newUser.type.toString()}
-                      onValueChange={(value) => setNewUser({ ...newUser, type: Number(value) as UserType })}
+                      onValueChange={(value) => {
+                        const userType = Number(value) as UserType
+                        setNewUser({
+                          ...newUser,
+                          type: userType,
+                          clientId: userType === UserType.ADMIN ? undefined : newUser.clientId,
+                        })
+                      }}
                     >
                       <SelectTrigger id="user-type">
                         <SelectValue placeholder="Selecione o tipo" />
@@ -290,6 +315,43 @@ export default function UsersPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+
+                {newUser.type === UserType.CLIENT && (
+                  <div>
+                    <Label htmlFor="user-client">Cliente Associado</Label>
+                    <Select
+                      value={newUser.clientId?.toString() || "none"}
+                      onValueChange={(value) =>
+                        setNewUser({ ...newUser, clientId: value === "none" ? undefined : Number(value) })
+                      }
+                    >
+                      <SelectTrigger id="user-client">
+                        <SelectValue placeholder="Selecione um cliente" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Nenhum cliente</SelectItem>
+                        {clients.map((client) => (
+                          <SelectItem key={client.id} value={client.id.toString()}>
+                            {client.name} - {client.email}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div>
+                  <Label htmlFor="user-company">Empresa</Label>
+                  <Input
+                    id="user-company"
+                    value={`Empresa ID: ${userState.currentUser?.empresaId || 1}`}
+                    disabled
+                    className="bg-muted"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    A empresa é automaticamente definida com base no usuário logado
+                  </p>
                 </div>
               </div>
               <DialogFooter>
@@ -597,7 +659,6 @@ export default function UsersPage() {
         </CardContent>
       </Card>
 
-      {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -695,7 +756,6 @@ export default function UsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* User Details Dialog */}
       <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
@@ -707,7 +767,6 @@ export default function UsersPage() {
           </DialogHeader>
           {selectedUser && (
             <div className="space-y-6">
-              {/* User Profile Section */}
               <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg p-6 border border-blue-200">
                 <div className="flex items-center gap-4 mb-4">
                   <Avatar className="h-16 w-16 ring-4 ring-blue-200">
@@ -752,7 +811,6 @@ export default function UsersPage() {
                 </div>
               </div>
 
-              {/* Contact Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card className="bg-gradient-to-br from-green-50 to-emerald-100 border-green-200">
                   <CardHeader className="pb-3">
@@ -817,7 +875,6 @@ export default function UsersPage() {
                 </Card>
               </div>
 
-              {/* Additional Information */}
               {(selectedUser.clientId || selectedUser.empresaId) && (
                 <Card className="bg-gradient-to-br from-amber-50 to-orange-100 border-amber-200">
                   <CardHeader className="pb-3">
