@@ -1,8 +1,20 @@
 import DietDetailsPage from "./DietDetailsPage"
 
 export async function generateStaticParams() {
-  // Return at least one valid parameter set for static export
-  return [{ id: "1" }, { id: "2" }, { id: "3" }]
+  // Return multiple valid parameter sets for static export
+  // This ensures Next.js can generate static pages for common diet IDs
+  return [
+    { id: "1" },
+    { id: "2" },
+    { id: "3" },
+    { id: "4" },
+    { id: "5" },
+    { id: "6" },
+    { id: "7" },
+    { id: "8" },
+    { id: "9" },
+    { id: "10" },
+  ]
 }
 
 interface PageProps {

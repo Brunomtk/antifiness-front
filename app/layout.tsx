@@ -29,6 +29,11 @@ export const metadata: Metadata = {
     telephone: false,
   },
   manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Anti-Fitness",
+  },
   openGraph: {
     type: "website",
     locale: "pt_BR",
@@ -62,6 +67,14 @@ export default function RootLayout({
         <meta name="msapplication-TileColor" content="#df0e67" />
         <meta name="msapplication-tap-highlight" content="no" />
         <meta name="theme-color" content="#df0e67" />
+
+        <link rel="apple-touch-icon" href="/icons/icon-152x152.jpg" />
+        <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.jpg" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.jpg" />
+
+        <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-72x72.jpg" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-72x72.jpg" />
+        <link rel="shortcut icon" href="/icons/icon-72x72.jpg" />
 
         <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
         <meta httpEquiv="Pragma" content="no-cache" />

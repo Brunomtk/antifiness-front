@@ -25,6 +25,7 @@ import { useToast } from "@/hooks/use-toast"
 import type { Course } from "@/types/course"
 import { useUserContext } from "@/contexts/user-context"
 import type { CourseProgressSummary } from "@/types/progress"
+import { useMobile } from "@/hooks/use-mobile"
 
 export default function ClientCourses() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -34,22 +35,22 @@ export default function ClientCourses() {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [coursesProgress, setCoursesProgress] = useState<Record<number, CourseProgressSummary>>({})
 
+  const isMobile = useMobile()
+
   const { courses, loading: coursesLoading, error: coursesError, fetchCourses } = useCourses()
   const { enrollments, loading: enrollmentsLoading, fetchEnrollments, createEnrollment } = useCourseEnrollments()
   const { fetchProgress } = useProgress()
   const { toast } = useToast()
 
-  // Normaliza estados de loading (objetos -> boolean)
-  const isLoading = (coursesLoading && (coursesLoading as any).courses) || (enrollmentsLoading && (enrollmentsLoading as any).enrollments)
+  const isLoading =
+    (coursesLoading && (coursesLoading as any).courses) ||
+    (enrollmentsLoading && (enrollmentsLoading as any).enrollments)
 
-
-
-  // Simular userId - em produção viria do contexto de autenticação
   const { state } = useUserContext()
   const userId = state.currentUser?.id ?? 0
   const empresasId = state.currentUser?.empresaId ?? 0
   useEffect(() => {
-    if (!empresasId) return;
+    if (!empresasId) return
     fetchCourses({
       page: 1,
       pageSize: 50,
@@ -58,7 +59,6 @@ export default function ClientCourses() {
     if (userId && empresasId) fetchEnrollments({ userId, empresasId })
   }, [fetchCourses, fetchEnrollments, userId, empresasId])
 
-  // Buscar progresso para cada inscrição
   useEffect(() => {
     const loadProgress = async () => {
       for (const enrollment of enrollments) {
@@ -148,7 +148,6 @@ export default function ClientCourses() {
         description: `Você foi inscrito no curso "${course.title}"`,
       })
 
-      // Recarregar inscrições
       if (userId && empresasId) fetchEnrollments({ userId, empresasId })
     } catch (error) {
       toast({
@@ -180,23 +179,23 @@ export default function ClientCourses() {
 
   if (isLoading) {
     return (
-      <div className="container py-10">
-        <div className="flex justify-between items-center mb-6">
+      <div className="container px-4 py-6 md:py-10">
+        <div className="flex flex-col space-y-4 mb-6 md:flex-row md:justify-between md:items-center md:space-y-0">
           <Skeleton className="h-8 w-48" />
-          <div className="flex items-center space-x-4">
-            <Skeleton className="h-10 w-80" />
-            <Skeleton className="h-10 w-10" />
+          <div className="flex flex-col space-y-2 md:flex-row md:items-center md:space-y-0 md:space-x-4">
+            <Skeleton className="h-10 w-full md:w-80" />
+            <Skeleton className="h-10 w-10 self-end md:self-auto" />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {Array.from({ length: 6 }).map((_, i) => (
             <Card key={i} className="bg-zinc-100 dark:bg-zinc-900">
-              <CardHeader>
+              <CardHeader className="pb-3">
                 <Skeleton className="h-6 w-full" />
                 <Skeleton className="h-4 w-full" />
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3">
                 <Skeleton className="aspect-video w-full" />
                 <div className="flex justify-between">
                   <Skeleton className="h-6 w-20" />
@@ -213,11 +212,11 @@ export default function ClientCourses() {
 
   if (coursesError) {
     return (
-      <div className="container py-10">
+      <div className="container px-4 py-6 md:py-10">
         <Card>
           <CardContent className="pt-6">
             <div className="text-center text-muted-foreground">
-              <p>Erro ao carregar cursos: {coursesError}</p>
+              <p className="text-sm md:text-base">Erro ao carregar cursos: {coursesError}</p>
             </div>
           </CardContent>
         </Card>
@@ -226,54 +225,76 @@ export default function ClientCourses() {
   }
 
   return (
-    <div className="container py-10">
-      <div className="flex justify-between items-center mb-6">
+    <div className="container px-4 py-6 md:py-10">
+      <div className="flex flex-col space-y-4 mb-6 md:flex-row md:justify-between md:items-center md:space-y-0">
         <h1 className="text-xl font-bold md:text-2xl">Meus Cursos</h1>
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-col space-y-2 md:flex-row md:items-center md:space-y-0 md:space-x-4">
           <Input
             type="search"
-            placeholder="Buscar curso..."
+            placeholder={isMobile ? "Buscar..." : "Buscar curso..."}
             className="w-full md:w-80"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <Button variant="outline" size="icon" onClick={() => setIsFilterOpen(true)}>
+          <Button
+            variant="outline"
+            size={isMobile ? "default" : "icon"}
+            onClick={() => setIsFilterOpen(true)}
+            className={isMobile ? "w-full justify-center" : ""}
+          >
             <Filter className="h-4 w-4" />
+            {isMobile && <span className="ml-2">Filtros</span>}
           </Button>
         </div>
       </div>
 
       <Tabs defaultValue="em-andamento" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="em-andamento">Em Andamento ({getInProgressCourses().length})</TabsTrigger>
-          <TabsTrigger value="concluidos">Concluídos ({getCompletedCourses().length})</TabsTrigger>
-          <TabsTrigger value="todos">Todos ({getEnrolledCourses().length})</TabsTrigger>
-          <TabsTrigger value="disponiveis">
-            Disponíveis ({filteredCourses.filter((c) => !enrolledCourseIds.has(c.id)).length})
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto">
+          <TabsList className={isMobile ? "w-max min-w-full" : ""}>
+            <TabsTrigger value="em-andamento" className={isMobile ? "text-xs px-3" : ""}>
+              {isMobile
+                ? `Andamento (${getInProgressCourses().length})`
+                : `Em Andamento (${getInProgressCourses().length})`}
+            </TabsTrigger>
+            <TabsTrigger value="concluidos" className={isMobile ? "text-xs px-3" : ""}>
+              Concluídos ({getCompletedCourses().length})
+            </TabsTrigger>
+            <TabsTrigger value="todos" className={isMobile ? "text-xs px-3" : ""}>
+              Todos ({getEnrolledCourses().length})
+            </TabsTrigger>
+            <TabsTrigger value="disponiveis" className={isMobile ? "text-xs px-3" : ""}>
+              {isMobile
+                ? `Disponíveis (${filteredCourses.filter((c) => !enrolledCourseIds.has(c.id)).length})`
+                : `Disponíveis (${filteredCourses.filter((c) => !enrolledCourseIds.has(c.id)).length})`}
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="em-andamento" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {getInProgressCourses().map((course) => (
               <Card key={course.id} className="bg-zinc-100 dark:bg-zinc-900">
-                <CardHeader>
-                  <CardTitle className="line-clamp-2">{course.title}</CardTitle>
-                  <CardDescription className="line-clamp-3">{course.description}</CardDescription>
+                <CardHeader className="pb-3">
+                  <CardTitle className="line-clamp-2 text-base md:text-lg">{course.title}</CardTitle>
+                  <CardDescription className="line-clamp-2 md:line-clamp-3 text-sm">
+                    {course.description}
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-3">
                   <img
                     src={course.thumbnail || "/placeholder.svg?height=200&width=400"}
                     alt={course.title}
                     className="rounded-md aspect-video object-cover"
                   />
 
-                  <div className="flex justify-between items-center">
-                    <Badge variant="secondary">{course.categoryName}</Badge>
-                    <div className="flex items-center space-x-2 text-sm text-zinc-500 dark:text-zinc-400">
-                      <Clock className="h-4 w-4" />
+                  <div className="flex flex-col space-y-2 md:flex-row md:justify-between md:items-center md:space-y-0">
+                    <Badge variant="secondary" className="text-xs w-fit">
+                      {course.categoryName}
+                    </Badge>
+                    <div className="flex items-center space-x-2 text-xs md:text-sm text-zinc-500 dark:text-zinc-400">
+                      <Clock className="h-3 w-3 md:h-4 md:w-4" />
                       <span>{formatDuration(course.durationMinutes)}</span>
-                      <Eye className="h-4 w-4" />
+                      <Eye className="h-3 w-3 md:h-4 md:w-4" />
                       <span>{course.enrollmentsCount}</span>
                     </div>
                   </div>
@@ -287,17 +308,17 @@ export default function ClientCourses() {
                       {Array.from({ length: 5 }).map((_, i) => (
                         <Star
                           key={i}
-                          className={`h-4 w-4 ${
+                          className={`h-3 w-3 md:h-4 md:w-4 ${
                             i < Math.floor(course.averageRating) ? "text-yellow-400 fill-current" : "text-gray-300"
                           }`}
                         />
                       ))}
-                      <span className="ml-2 text-sm text-muted-foreground">({course.reviewsCount})</span>
+                      <span className="ml-2 text-xs md:text-sm text-muted-foreground">({course.reviewsCount})</span>
                     </div>
                   </div>
 
                   <Button
-                    className="w-full"
+                    className="w-full h-10 md:h-auto"
                     onClick={() => {
                       setSelectedCourse(course)
                       setIsVideoOpen(true)
@@ -312,16 +333,16 @@ export default function ClientCourses() {
           </div>
 
           {getInProgressCourses().length === 0 && (
-            <div className="text-center py-12">
-              <BookOpen className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-medium mb-2">Nenhum curso em andamento</h3>
-              <p className="text-muted-foreground">Comece um novo curso para vê-lo aqui</p>
+            <div className="text-center py-8 md:py-12">
+              <BookOpen className="h-10 w-10 md:h-12 md:w-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-base md:text-lg font-medium mb-2">Nenhum curso em andamento</h3>
+              <p className="text-sm md:text-base text-muted-foreground">Comece um novo curso para vê-lo aqui</p>
             </div>
           )}
         </TabsContent>
 
         <TabsContent value="concluidos" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {getCompletedCourses().map((course) => (
               <Card key={course.id} className="bg-zinc-100 dark:bg-zinc-900">
                 <CardHeader>
@@ -368,7 +389,7 @@ export default function ClientCourses() {
         </TabsContent>
 
         <TabsContent value="todos" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {getEnrolledCourses().map((course) => (
               <Card key={course.id} className="bg-zinc-100 dark:bg-zinc-900">
                 <CardHeader>
@@ -421,7 +442,7 @@ export default function ClientCourses() {
         </TabsContent>
 
         <TabsContent value="disponiveis" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {filteredCourses
               .filter((course) => !enrolledCourseIds.has(course.id))
               .map((course) => (
@@ -480,12 +501,11 @@ export default function ClientCourses() {
         </TabsContent>
       </Tabs>
 
-      {/* Modal de Vídeo */}
       <Dialog open={isVideoOpen} onOpenChange={setIsVideoOpen}>
-        <DialogContent className="sm:max-w-[800px]">
+        <DialogContent className={isMobile ? "w-[95vw] max-w-[95vw] h-[80vh]" : "sm:max-w-[800px]"}>
           <DialogHeader>
-            <DialogTitle>{selectedCourse?.title}</DialogTitle>
-            <DialogDescription>{selectedCourse?.description}</DialogDescription>
+            <DialogTitle className="text-base md:text-lg">{selectedCourse?.title}</DialogTitle>
+            <DialogDescription className="text-sm">{selectedCourse?.description}</DialogDescription>
           </DialogHeader>
           <div className="relative w-full aspect-video bg-black rounded-lg">
             <video
@@ -496,22 +516,21 @@ export default function ClientCourses() {
             />
           </div>
           <DialogFooter>
-            <Button type="button" onClick={() => setIsVideoOpen(false)}>
+            <Button type="button" onClick={() => setIsVideoOpen(false)} className="w-full md:w-auto">
               Fechar
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Filtros */}
       <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className={isMobile ? "w-[95vw] max-w-[95vw]" : "sm:max-w-[425px]"}>
           <DialogHeader>
-            <DialogTitle>Filtrar Cursos</DialogTitle>
-            <DialogDescription>Selecione as opções de filtro desejadas.</DialogDescription>
+            <DialogTitle className="text-base md:text-lg">Filtrar Cursos</DialogTitle>
+            <DialogDescription className="text-sm">Selecione as opções de filtro desejadas.</DialogDescription>
           </DialogHeader>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full h-12 md:h-10">
               <SelectValue placeholder="Selecione a categoria" />
             </SelectTrigger>
             <SelectContent>
@@ -525,7 +544,7 @@ export default function ClientCourses() {
             </SelectContent>
           </Select>
           <DialogFooter>
-            <Button type="submit" onClick={() => setIsFilterOpen(false)}>
+            <Button type="submit" onClick={() => setIsFilterOpen(false)} className="w-full md:w-auto h-12 md:h-10">
               Aplicar Filtro
             </Button>
           </DialogFooter>
