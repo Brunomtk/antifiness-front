@@ -37,6 +37,8 @@ export default function DietDetailsPage({ dietId }: DietDetailsPageProps) {
   const { getDietById, updateDiet } = useDiets()
 
   const [isAddMealOpen, setIsAddMealOpen] = useState(false)
+  const [isEditMealOpen, setIsEditMealOpen] = useState(false)
+  const [editMeal, setEditMeal] = useState<any | null>(null)
   const [isFoodPickerOpen, setIsFoodPickerOpen] = useState(false)
   const [isAddProgressOpen, setIsAddProgressOpen] = useState(false)
   const [selectedMealId, setSelectedMealId] = useState<number | null>(null)
@@ -97,7 +99,43 @@ export default function DietDetailsPage({ dietId }: DietDetailsPageProps) {
     }
   }
 
-  const loadMeals = async () => {
+  
+  const openEditMeal = (meal: any) => {
+    setEditMeal({
+      id: meal.id,
+      name: meal.name || "",
+      type: meal.type ?? 0,
+      scheduledTime: meal.scheduledTime || "08:00:00",
+      instructions: meal.instructions || "",
+      foods: (meal.foods || []).map((f: any) => ({
+        id: f.id,
+        mealId: meal.id,
+        foodId: f.foodId,
+        quantity: f.quantity,
+        unit: f.unit
+      }))
+    })
+    setIsEditMealOpen(true)
+  }
+
+  const handleUpdateMeal = async () => {
+    if (!diet || !editMeal) return
+    try {
+      await mealService.updateMeal(diet.id, editMeal.id, {
+        name: editMeal.name,
+        type: editMeal.type,
+        scheduledTime: editMeal.scheduledTime,
+        instructions: editMeal.instructions,
+        foods: editMeal.foods
+      })
+      await loadMeals()
+      setIsEditMealOpen(false)
+    } catch (error) {
+      console.error("Erro ao atualizar refeição:", error)
+      toast.error("Não foi possível atualizar a refeição.")
+    }
+  }
+const loadMeals = async () => {
     if (!diet) return
 
     try {
@@ -185,7 +223,7 @@ export default function DietDetailsPage({ dietId }: DietDetailsPageProps) {
 
   const handleDeleteMeal = async (mealId: number) => {
     try {
-      await mealService.deleteMeal(mealId)
+      await mealService.deleteMeal(diet.id, mealId)
       await loadMeals() // Reload meals after deletion
       toast.success("Refeição removida com sucesso!")
     } catch (error) {
@@ -238,6 +276,7 @@ export default function DietDetailsPage({ dietId }: DietDetailsPageProps) {
 
   if (loading) {
     return (
+
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -482,7 +521,15 @@ export default function DietDetailsPage({ dietId }: DietDetailsPageProps) {
                                 <Check className="h-4 w-4" />
                               </Button>
                             )}
-                            <Button
+                                                        <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600 bg-transparent"
+                              onClick={() => openEditMeal(meal)}
+                            >
+                              <Edit3 className="h-4 w-4" />
+                            </Button>
+<Button
                               size="sm"
                               variant="outline"
                               className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600 bg-transparent"
@@ -620,7 +667,159 @@ export default function DietDetailsPage({ dietId }: DietDetailsPageProps) {
         </Tabs>
       </div>
 
-      <Dialog open={isAddMealOpen} onOpenChange={setIsAddMealOpen}>
+      
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Editar Dieta</DialogTitle>
+            <DialogDescription>Atualize as informações básicas da dieta.</DialogDescription>
+          </DialogHeader>
+
+          {editedDiet && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="dietName">Nome</Label>
+                  <Input
+                    id="dietName"
+                    value={editedDiet.name || ""}
+                    onChange={(e) => setEditedDiet({ ...editedDiet, name: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dietStatus">Status</Label>
+                  <Select
+                    value={String(editedDiet.status ?? 0)}
+                    onValueChange={(v) => setEditedDiet({ ...editedDiet, status: Number(v) as any })}
+                  >
+                    <SelectTrigger id="dietStatus">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0">Rascunho</SelectItem>
+                      <SelectItem value="1">Ativa</SelectItem>
+                      <SelectItem value="2">Pausada</SelectItem>
+                      <SelectItem value="3">Concluída</SelectItem>
+                      <SelectItem value="4">Cancelada</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dietStart">Início</Label>
+                  <Input
+                    id="dietStart"
+                    type="date"
+                    value={(editedDiet.startDate || "").slice(0, 10)}
+                    onChange={(e) => setEditedDiet({ ...editedDiet, startDate: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dietEnd">Fim</Label>
+                  <Input
+                    id="dietEnd"
+                    type="date"
+                    value={(editedDiet.endDate || "").slice(0, 10)}
+                    onChange={(e) => setEditedDiet({ ...editedDiet, endDate: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="dietDesc">Descrição</Label>
+                <Textarea
+                  id="dietDesc"
+                  rows={3}
+                  value={editedDiet.description || ""}
+                  onChange={(e) => setEditedDiet({ ...editedDiet, description: e.target.value })}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Calorias/dia</Label>
+                  <Input
+                    type="number"
+                    value={Number.isFinite(editedDiet.dailyCalories as any) ? String(editedDiet.dailyCalories) : ""}
+                    onChange={(e) => setEditedDiet({ ...editedDiet, dailyCalories: Number(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Proteína (g)</Label>
+                  <Input
+                    type="number"
+                    value={Number.isFinite(editedDiet.dailyProtein as any) ? String(editedDiet.dailyProtein) : ""}
+                    onChange={(e) => setEditedDiet({ ...editedDiet, dailyProtein: Number(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Carboidrato (g)</Label>
+                  <Input
+                    type="number"
+                    value={Number.isFinite(editedDiet.dailyCarbs as any) ? String(editedDiet.dailyCarbs) : ""}
+                    onChange={(e) => setEditedDiet({ ...editedDiet, dailyCarbs: Number(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Gordura (g)</Label>
+                  <Input
+                    type="number"
+                    value={Number.isFinite(editedDiet.dailyFat as any) ? String(editedDiet.dailyFat) : ""}
+                    onChange={(e) => setEditedDiet({ ...editedDiet, dailyFat: Number(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Fibra (g)</Label>
+                  <Input
+                    type="number"
+                    value={Number.isFinite(editedDiet.dailyFiber as any) ? String(editedDiet.dailyFiber) : ""}
+                    onChange={(e) => setEditedDiet({ ...editedDiet, dailyFiber: Number(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Sódio (mg)</Label>
+                  <Input
+                    type="number"
+                    value={Number.isFinite(editedDiet.dailySodium as any) ? String(editedDiet.dailySodium) : ""}
+                    onChange={(e) => setEditedDiet({ ...editedDiet, dailySodium: Number(e.target.value) || 0 })}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="dietRestrictions">Restrições</Label>
+                <Textarea
+                  id="dietRestrictions"
+                  rows={2}
+                  value={editedDiet.restrictions || ""}
+                  onChange={(e) => setEditedDiet({ ...editedDiet, restrictions: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="dietNotes">Observações</Label>
+                <Textarea
+                  id="dietNotes"
+                  rows={2}
+                  value={editedDiet.notes || ""}
+                  onChange={(e) => setEditedDiet({ ...editedDiet, notes: e.target.value })}
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>Cancelar</Button>
+                <Button type="button" onClick={handleSaveDiet}>
+                  <Save className="mr-2 h-4 w-4" /> Salvar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+<Dialog open={isAddMealOpen} onOpenChange={setIsAddMealOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Adicionar Refeição</DialogTitle>
@@ -872,6 +1071,155 @@ export default function DietDetailsPage({ dietId }: DietDetailsPageProps) {
           </div>
         </DialogContent>
       </Dialog>
+<Dialog open={isEditMealOpen} onOpenChange={setIsEditMealOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Editar Refeição</DialogTitle>
+            <DialogDescription>Altere as informações da refeição e salve para atualizar.</DialogDescription>
+          </DialogHeader>
+
+          {editMeal && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="editName">Nome</Label>
+                  <Input id="editName" value={editMeal.name} onChange={(e) => setEditMeal({ ...editMeal, name: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editType">Tipo</Label>
+                  <Select
+                    value={String(editMeal.type)}
+                    onValueChange={(v) => setEditMeal({ ...editMeal, type: Number(v) })}
+                  >
+                    <SelectTrigger id="editType">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {mealService.getMealTypeOptions().map((opt) => (
+                        <SelectItem key={opt.value} value={String(opt.value)}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editTime">Horário</Label>
+                  <Input
+                    id="editTime"
+                    type="time"
+                    value={(editMeal.scheduledTime || "").slice(0,5)}
+                    onChange={(e) => setEditMeal({ ...editMeal, scheduledTime: e.target.value + (e.target.value.length===5 ? ':00' : '') })}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editInstructions">Instruções</Label>
+                <Textarea
+                  id="editInstructions"
+                  rows={3}
+                  value={editMeal.instructions}
+                  onChange={(e) => setEditMeal({ ...editMeal, instructions: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Alimentos</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setEditMeal({
+                        ...editMeal,
+                        foods: [...(editMeal.foods || []), { foodId: 0, quantity: 0, unit: "g" }],
+                      })
+                    }
+                  >
+                    <Plus className="h-4 w-4 mr-2" /> Adicionar alimento
+                  </Button>
+                </div>
+
+                {(!editMeal.foods || editMeal.foods.length === 0) && (
+                  <p className="text-sm text-muted-foreground">Nenhum alimento adicionado.</p>
+                )}
+
+                {editMeal.foods && editMeal.foods.length > 0 && (
+                  <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3 bg-gray-50">
+                    {editMeal.foods.map((f: any, idx: number) => (
+                      <div key={idx} className="grid grid-cols-12 gap-2 items-center bg-white p-2 rounded border">
+                        <div className="col-span-4">
+                          <Label className="text-xs">Food ID</Label>
+                          <Input
+                            value={String(f.foodId ?? 0)}
+                            onChange={(e) => {
+                              const v = Number(e.target.value) || 0
+                              const clone = [...editMeal.foods]
+                              clone[idx] = { ...clone[idx], foodId: v }
+                              setEditMeal({ ...editMeal, foods: clone })
+                            }}
+                          />
+                        </div>
+                        <div className="col-span-4">
+                          <Label className="text-xs">Quantidade</Label>
+                          <Input
+                            value={String(f.quantity ?? 0)}
+                            onChange={(e) => {
+                              const v = Number(e.target.value) || 0
+                              const clone = [...editMeal.foods]
+                              clone[idx] = { ...clone[idx], quantity: v }
+                              setEditMeal({ ...editMeal, foods: clone })
+                            }}
+                          />
+                        </div>
+                        <div className="col-span-3">
+                          <Label className="text-xs">Unidade</Label>
+                          <Input
+                            value={f.unit || "g"}
+                            onChange={(e) => {
+                              const clone = [...editMeal.foods]
+                              clone[idx] = { ...clone[idx], unit: e.target.value }
+                              setEditMeal({ ...editMeal, foods: clone })
+                            }}
+                          />
+                        </div>
+                        <div className="col-span-1 flex justify-end">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
+                            onClick={() => {
+                              const clone = [...(editMeal.foods || [])]
+                              clone.splice(idx, 1)
+                              setEditMeal({ ...editMeal, foods: clone })
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <Button variant="outline" onClick={() => setIsEditMealOpen(false)}>Cancelar</Button>
+                <Button onClick={handleUpdateMeal}>
+                  <Save className="mr-2 h-4 w-4" /> Salvar alterações
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
+      
+  
+  
+
   )
+
+
 }

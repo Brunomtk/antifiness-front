@@ -1,4 +1,5 @@
 import { api } from "@/lib/api"
+import type { ApiMeal, ApiDietProgress, CreateMealRequest, CreateProgressRequest } from "@/types/diet"
 
 export interface MealFood {
   id?: number
@@ -14,58 +15,60 @@ export interface MealFood {
 }
 
 export interface Meal {
-  id?: number
+  id: number
   dietId: number
   name: string
   type: number
   typeDescription?: string
   scheduledTime: string
   instructions?: string
+  isCompleted?: boolean
   totalCalories?: number
   totalProtein?: number
-  totalCarbs?: number
-  totalFat?: number
-  isCompleted?: boolean
-  completedAt?: string
-  createdAt?: string
-  updatedAt?: string
   foods: MealFood[]
 }
 
-export interface CreateMealRequest {
-  name: string
-  type: number
-  scheduledTime: string
-  instructions?: string
-  foods: {
-    foodId: number
-    quantity: number
-    unit: string
-  }[]
-}
+class MealService {
+  // ---- Meals ----
+  async getMealsByDiet(dietId: number): Promise<ApiMeal[]> {
+    // Prefer a dedicated endpoint if available, else fallback to Diet details
+    try {
+      const res = await api.get(`/Diet/${dietId}/meals`)
+      return Array.isArray(res.data) ? res.data : []
+    } catch (_e) {
+      const dietRes = await api.get(`/Diet/${dietId}`)
+      const diet = dietRes.data || {}
+      return Array.isArray(diet.meals) ? diet.meals : []
+    }
+  }
 
-export class MealService {
-  async getMealsByDiet(dietId: number): Promise<Meal[]> {
-    const response = await api.get(`/Diet/meals?dietId=${dietId}`)
+  async createMeal(dietId: number, data: CreateMealRequest): Promise<ApiMeal> {
+    const response = await api.post(`/Diet/${dietId}/meals`, data)
     return response.data
   }
 
-  async createMeal(dietId: number, meal: CreateMealRequest): Promise<Meal> {
-    const response = await api.post(`/Diet/${dietId}/meals`, meal)
+  async updateMeal(dietId: number, mealId: number, data: Partial<CreateMealRequest>): Promise<ApiMeal> {
+    const response = await api.put(`/Diet/${dietId}/meals/${mealId}`, data)
     return response.data
   }
 
-  async updateMeal(mealId: number, meal: CreateMealRequest): Promise<Meal> {
-    const response = await api.put(`/Diet/meals/${mealId}`, meal)
-    return response.data
-  }
-
-  async deleteMeal(mealId: number): Promise<void> {
-    await api.delete(`/Diet/meals/${mealId}`)
+  async deleteMeal(dietId: number, mealId: number): Promise<void> {
+    await api.delete(`/Diet/${dietId}/meals/${mealId}`)
   }
 
   async completeMeal(mealId: number): Promise<void> {
     await api.post(`/Diet/meals/${mealId}/complete`)
+  }
+
+  // ---- Progress (proxy to Diet endpoints) ----
+  async getProgressByDiet(dietId: number): Promise<ApiDietProgress[]> {
+    const response = await api.get(`/Diet/progress?dietId=${dietId}`)
+    return Array.isArray(response.data) ? response.data : []
+  }
+
+  async addProgress(dietId: number, data: CreateProgressRequest) {
+    const response = await api.post(`/Diet/${dietId}/progress`, data)
+    return response.data
   }
 
   getMealTypeOptions() {

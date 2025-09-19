@@ -17,38 +17,13 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  title: "Anti-Fitness - Sistema de Nutrição",
-  description: "Sistema completo de gestão nutricional com acompanhamento personalizado para uma vida mais saudável",
-  keywords: ["nutrição", "dieta", "saúde", "fitness", "acompanhamento nutricional", "anti-fitness"],
-  authors: [{ name: "Anti-Fitness Team" }],
-  creator: "Anti-Fitness",
-  publisher: "Anti-Fitness",
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false,
-  },
+  title: "Antifitness",
+  description: "Antifitness app",
   manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "Anti-Fitness",
-  },
-  openGraph: {
-    type: "website",
-    locale: "pt_BR",
-    url: "https://antifitness.com",
-    siteName: "Anti-Fitness",
-    title: "Anti-Fitness - Sistema de Nutrição",
-    description: "Sistema completo de gestão nutricional com acompanhamento personalizado",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Anti-Fitness - Sistema de Nutrição",
-    description: "Sistema completo de gestão nutricional com acompanhamento personalizado",
-  },
-  generator: "v0.app",
-}
+  icons: { icon: "/favicon.ico", apple: "/apple-touch-icon.png" }
+};
+
+
 
 export default function RootLayout({
   children,
@@ -58,6 +33,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <head>
+        <link rel="icon" href="/favicon.ico" />
         <meta name="application-name" content="Anti-Fitness" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -68,9 +44,9 @@ export default function RootLayout({
         <meta name="msapplication-tap-highlight" content="no" />
         <meta name="theme-color" content="#df0e67" />
 
-        <link rel="apple-touch-icon" href="/icons/icon-152x152.jpg" />
-        <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.jpg" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.jpg" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
         <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-72x72.jpg" />
         <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-72x72.jpg" />
