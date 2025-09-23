@@ -82,13 +82,31 @@ class DietService {
     return response.data
   }
 
+  
   async updateMeal(dietId: number, mealId: number, data: Partial<CreateMealRequest>): Promise<ApiMeal> {
-    const response = await api.put(`/Diet/${dietId}/meals/${mealId}`, data)
-    return response.data
+    // Normalize scheduledTime to ticks object for V2 backend
+    let payload: any = { ...data };
+    const st: any = (data as any)?.scheduledTime;
+    if (typeof st === "string" && st.trim() !== "") {
+      payload.scheduledTime = { ticks: timeStringToTicks(st) };
+    } else if (typeof st === "number" && Number.isFinite(st)) {
+      payload.scheduledTime = { ticks: st };
+    } else if (st && typeof st === "object" && typeof st.ticks === "number") {
+      payload.scheduledTime = st;
+    } else if (st == null) {
+      // leave undefined to avoid overriding on server
+      delete payload.scheduledTime;
+    }
+
+    // Ensure Accept JSON (avoid Swagger default text/plain)
+    const response = await api.put(`/Diet/${dietId}/meals/${mealId}`, payload, {
+      headers: { Accept: "application/json" }
+    });
+    return response.data;
   }
 
   async deleteMeal(dietId: number, mealId: number): Promise<void> {
-    await api.delete(`/Diet/${dietId}/meals/${mealId}`)
+    await api.delete(`/Diet/meals/${mealId}`)
   }
 
   async completeMeal(mealId: number): Promise<void> {

@@ -17,6 +17,7 @@ import { ArrowLeft, Save, Loader2, Calendar, ChefHat, User, Edit3, Clock, Plus, 
 import { useDiets } from "@/hooks/use-diet"
 import FoodPickerModal from "@/components/food/FoodPickerModal"
 import { type ApiDiet, type DietStatus, MealType, getDietStatusLabel, type CreateMealFoodRequest } from "@/types/diet"
+import { foodService } from "@/services/food-service"
 import { toast } from "sonner"
 import { mealService, type Meal } from "@/services/meal-service"
 
@@ -26,7 +27,10 @@ interface DietDetailsPageProps {
 
 export default function DietDetailsPage({ dietId }: DietDetailsPageProps) {
   const router = useRouter()
+  const foodNameFromId = (id?: number) => (id != null ? (foodIndex[id] || `ID ${id}`) : "—");
+
   const [activeSection, setActiveSection] = useState("overview")
+  const [foodIndex, setFoodIndex] = useState<Record<number, string>>({})
   const [diet, setDiet] = useState<ApiDiet | null>(null)
   const [editedDiet, setEditedDiet] = useState<ApiDiet | null>(null)
   const [isChangeClientOpen, setIsChangeClientOpen] = useState(false)
@@ -40,6 +44,7 @@ export default function DietDetailsPage({ dietId }: DietDetailsPageProps) {
   const [isEditMealOpen, setIsEditMealOpen] = useState(false)
   const [editMeal, setEditMeal] = useState<any | null>(null)
   const [isFoodPickerOpen, setIsFoodPickerOpen] = useState(false)
+  const [isFoodPickerOpenEdit, setIsFoodPickerOpenEdit] = useState(false)
   const [isAddProgressOpen, setIsAddProgressOpen] = useState(false)
   const [selectedMealId, setSelectedMealId] = useState<number | null>(null)
 
@@ -83,6 +88,18 @@ export default function DietDetailsPage({ dietId }: DietDetailsPageProps) {
       loadProgress()
     }
   }, [diet])
+
+  
+  useEffect(() => {
+    (async () => {
+      try {
+        const foods = await foodService.getFoods();
+        const idx: Record<number, string> = {};
+        foods.forEach(f => { idx[f.id] = f.name; });
+        setFoodIndex(idx);
+      } catch { /* noop */ }
+    })();
+  }, []);
 
   const loadDietData = async () => {
     if (!dietId) return
@@ -273,6 +290,13 @@ const loadMeals = async () => {
     setNewMeal({ ...newMeal, foods: selectedFoods })
     setIsFoodPickerOpen(false)
   }
+
+  const handleFoodSelectionEdit = (items: CreateMealFoodRequest[]) => {
+    if (!editMeal) return;
+    setEditMeal({ ...editMeal, foods: items });
+    setIsFoodPickerOpenEdit(false);
+  };
+
 
   if (loading) {
     return (
@@ -896,7 +920,7 @@ const loadMeals = async () => {
                   {newMeal.foods.map((food, index) => (
                     <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
                       <div className="flex-1">
-                        <span className="text-sm font-medium">Alimento ID: {food.foodId}</span>
+                        <span className="text-sm font-medium">Alimento: {foodNameFromId(food.foodId)}</span>
                         <div className="text-xs text-gray-500">
                           {food.quantity} {food.unit}
                         </div>
@@ -944,6 +968,15 @@ const loadMeals = async () => {
           onOpenChange={setIsFoodPickerOpen}
           onConfirm={handleFoodSelection}
           initial={newMeal.foods || []}
+        />
+      </Dialog>
+
+      <Dialog open={isFoodPickerOpenEdit} onOpenChange={setIsFoodPickerOpenEdit}>
+        <FoodPickerModal
+          open={isFoodPickerOpenEdit}
+          onOpenChange={setIsFoodPickerOpenEdit}
+          onConfirm={handleFoodSelectionEdit}
+          initial={(editMeal?.foods as any) || []}
         />
       </Dialog>
 
@@ -1129,14 +1162,8 @@ const loadMeals = async () => {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() =>
-                      setEditMeal({
-                        ...editMeal,
-                        foods: [...(editMeal.foods || []), { foodId: 0, quantity: 0, unit: "g" }],
-                      })
-                    }
-                  >
-                    <Plus className="h-4 w-4 mr-2" /> Adicionar alimento
+                    onClick={() => setIsFoodPickerOpenEdit(true)}
+                  ><Plus className="h-4 w-4 mr-2" /> Selecionar Alimentos
                   </Button>
                 </div>
 
@@ -1144,62 +1171,39 @@ const loadMeals = async () => {
                   <p className="text-sm text-muted-foreground">Nenhum alimento adicionado.</p>
                 )}
 
-                {editMeal.foods && editMeal.foods.length > 0 && (
-                  <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3 bg-gray-50">
-                    {editMeal.foods.map((f: any, idx: number) => (
-                      <div key={idx} className="grid grid-cols-12 gap-2 items-center bg-white p-2 rounded border">
-                        <div className="col-span-4">
-                          <Label className="text-xs">Food ID</Label>
-                          <Input
-                            value={String(f.foodId ?? 0)}
-                            onChange={(e) => {
-                              const v = Number(e.target.value) || 0
-                              const clone = [...editMeal.foods]
-                              clone[idx] = { ...clone[idx], foodId: v }
-                              setEditMeal({ ...editMeal, foods: clone })
-                            }}
-                          />
+                {editMeal.foods && editMeal.foods.length > 0 ? (
+                  <div className="space-y-2 max-h-40 overflow-y-auto border rounded-lg p-3 bg-gray-50">
+                    {editMeal.foods.map((food, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
+                        <div className="flex-1">
+                          <span className="text-sm font-medium">Alimento: {foodNameFromId(food.foodId)}</span>
+                          <div className="text-xs text-gray-500">
+                            {food.quantity} {food.unit}
+                          </div>
                         </div>
-                        <div className="col-span-4">
-                          <Label className="text-xs">Quantidade</Label>
-                          <Input
-                            value={String(f.quantity ?? 0)}
-                            onChange={(e) => {
-                              const v = Number(e.target.value) || 0
-                              const clone = [...editMeal.foods]
-                              clone[idx] = { ...clone[idx], quantity: v }
-                              setEditMeal({ ...editMeal, foods: clone })
-                            }}
-                          />
-                        </div>
-                        <div className="col-span-3">
-                          <Label className="text-xs">Unidade</Label>
-                          <Input
-                            value={f.unit || "g"}
-                            onChange={(e) => {
-                              const clone = [...editMeal.foods]
-                              clone[idx] = { ...clone[idx], unit: e.target.value }
-                              setEditMeal({ ...editMeal, foods: clone })
-                            }}
-                          />
-                        </div>
-                        <div className="col-span-1 flex justify-end">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
-                            onClick={() => {
-                              const clone = [...(editMeal.foods || [])]
-                              clone.splice(idx, 1)
-                              setEditMeal({ ...editMeal, foods: clone })
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
+                          onClick={() => {
+                            const copy = [...editMeal.foods];
+                            copy.splice(index, 1);
+                            setEditMeal({ ...editMeal, foods: copy });
+                          }}
+                          aria-label="Remover alimento"
+                          title="Remover"
+                        >
+                          🗑️
+                        </Button>
                       </div>
                     ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-lg">
+                    <div className="text-4xl mb-2">🍽️</div>
+                    <p className="text-sm text-gray-500">Nenhum alimento adicionado</p>
+                    <p className="text-xs text-gray-400">Clique em "Selecionar Alimentos" para começar</p>
                   </div>
                 )}
               </div>

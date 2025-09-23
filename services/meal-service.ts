@@ -14,61 +14,89 @@ export interface MealFood {
   fat?: number
 }
 
-export interface Meal {
-  id: number
-  dietId: number
-  name: string
-  type: number
-  typeDescription?: string
-  scheduledTime: string
-  instructions?: string
-  isCompleted?: boolean
-  totalCalories?: number
-  totalProtein?: number
-  foods: MealFood[]
+// Helpers
+function timeStringToTicks(value: string): number {
+  // accepts "HH:mm" or "HH:mm:ss"
+  const parts = value.split(":").map((x) => parseInt(x, 10) || 0);
+  const h = parts[0] ?? 0;
+  const m = parts[1] ?? 0;
+  const s = parts[2] ?? 0;
+  const totalSeconds = h * 3600 + m * 60 + s;
+  return totalSeconds * 10_000_000; // 1s = 10,000,000 ticks
+}
+
+function ticksToTimeString(ticks: number): string {
+  const totalSeconds = Math.floor(ticks / 10_000_000);
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(h)}:${pad(m)}:${pad(s)}`;
 }
 
 class MealService {
-  // ---- Meals ----
   async getMealsByDiet(dietId: number): Promise<ApiMeal[]> {
-    // Prefer a dedicated endpoint if available, else fallback to Diet details
-    try {
-      const res = await api.get(`/Diet/${dietId}/meals`)
-      return Array.isArray(res.data) ? res.data : []
-    } catch (_e) {
-      const dietRes = await api.get(`/Diet/${dietId}`)
-      const diet = dietRes.data || {}
-      return Array.isArray(diet.meals) ? diet.meals : []
-    }
+    const res = await api.get(`/Diet/${dietId}/meals`, { headers: { Accept: "application/json" } });
+    return res.data;
   }
 
   async createMeal(dietId: number, data: CreateMealRequest): Promise<ApiMeal> {
-    const response = await api.post(`/Diet/${dietId}/meals`, data)
-    return response.data
+    // For create, backend expects TimeSpan string ("HH:mm:ss").
+    let payload: any = { ...data };
+    const st: any = (data as any)?.scheduledTime;
+    if (typeof st === "object" && st && typeof st.ticks === "number") {
+      payload.scheduledTime = ticksToTimeString(st.ticks);
+    }
+    const res = await api.post(`/Diet/${dietId}/meals`, payload, { headers: { Accept: "application/json" } });
+    return res.data;
   }
 
   async updateMeal(dietId: number, mealId: number, data: Partial<CreateMealRequest>): Promise<ApiMeal> {
-    const response = await api.put(`/Diet/${dietId}/meals/${mealId}`, data)
-    return response.data
+    // For update, use V2 with ticks
+    let payload: any = { ...data };
+    const st: any = (data as any)?.scheduledTime;
+    if (typeof st === "string" && st.trim() !== "") {
+      payload.scheduledTime = { ticks: timeStringToTicks(st) };
+    } else if (typeof st === "number" && Number.isFinite(st)) {
+      payload.scheduledTime = { ticks: st };
+    } else if (st && typeof st === "object" && typeof st.ticks === "number") {
+      payload.scheduledTime = st;
+    } else if (st == null) {
+      delete payload.scheduledTime;
+    }
+
+    const res = await api.put(`/Diet/${dietId}/meals/${mealId}`, payload, { headers: { Accept: "application/json" } });
+    return res.data;
   }
 
   async deleteMeal(dietId: number, mealId: number): Promise<void> {
-    await api.delete(`/Diet/${dietId}/meals/${mealId}`)
+    // Preferred route (backend): DELETE /Diet/meals/{mealId}
+    try {
+      await api.delete(`/Diet/meals/${mealId}`);
+      return;
+    } catch (err: any) {
+      const status = err?.response?.status;
+      if (status === 404 || status === 405) {
+        // Fallback to legacy path if server only exposes this
+        await api.delete(`/Diet/${dietId}/meals/${mealId}`);
+        return;
+      }
+      throw err;
+    }
   }
 
   async completeMeal(mealId: number): Promise<void> {
-    await api.post(`/Diet/meals/${mealId}/complete`)
+    await api.post(`/Diet/meals/${mealId}/complete`, {});
   }
 
-  // ---- Progress (proxy to Diet endpoints) ----
   async getProgressByDiet(dietId: number): Promise<ApiDietProgress[]> {
-    const response = await api.get(`/Diet/progress?dietId=${dietId}`)
-    return Array.isArray(response.data) ? response.data : []
+    const res = await api.get(`/Diet/${dietId}/progress`, { headers: { Accept: "application/json" } });
+    return res.data;
   }
 
-  async addProgress(dietId: number, data: CreateProgressRequest) {
-    const response = await api.post(`/Diet/${dietId}/progress`, data)
-    return response.data
+  async addProgress(dietId: number, data: CreateProgressRequest): Promise<ApiDietProgress> {
+    const res = await api.post(`/Diet/${dietId}/progress`, data, { headers: { Accept: "application/json" } });
+    return res.data;
   }
 
   getMealTypeOptions() {
