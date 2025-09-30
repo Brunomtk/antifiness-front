@@ -12,6 +12,7 @@ import type {
   MeasurementProgressRequest,
   PhotoProgressRequest,
   AchievementRequest,
+  ClientStats, // Added ClientStats import
 } from "@/types/client"
 
 export type {
@@ -62,14 +63,41 @@ class ClientService {
     await api.delete(`${base}/${id}`)
   }
 
-  async getStats(): Promise<Record<string, any>> {
+  async getStats(): Promise<ClientStats> {
+    // Changed return type from Record<string, any> to ClientStats
     try {
       const { data } = await api.get<Record<string, any>>(`${base}/stats`)
-      return data ?? {}
+
+      const stats: ClientStats = {
+        totalClients: data?.totalClients ?? 0,
+        activeClients: data?.activeClients ?? 0,
+        newClientsThisMonth: data?.newClientsThisMonth ?? 0,
+        completedGoals: data?.completedGoals ?? 0,
+        averageProgress: data?.averageProgress ?? 0,
+        retentionRate: data?.retentionRate ?? 0,
+      }
+
+      return stats
     } catch (error: any) {
-      if (error?.response?.status === 404) return {}
+      if (error?.response?.status === 404) {
+        return {
+          totalClients: 0,
+          activeClients: 0,
+          newClientsThisMonth: 0,
+          completedGoals: 0,
+          averageProgress: 0,
+          retentionRate: 0,
+        }
+      }
       console.warn("getStats falhou:", error?.response?.status || error?.message || error)
-      return {}
+      return {
+        totalClients: 0,
+        activeClients: 0,
+        newClientsThisMonth: 0,
+        completedGoals: 0,
+        averageProgress: 0,
+        retentionRate: 0,
+      }
     }
   }
 
@@ -175,7 +203,8 @@ class ClientService {
     return this.remove(id)
   }
 
-  async getClientStats(): Promise<Record<string, any>> {
+  async getClientStats(): Promise<ClientStats> {
+    // Changed return type from Record<string, any> to ClientStats
     return this.getStats()
   }
 

@@ -42,8 +42,8 @@ type NotificationAction =
   | { type: "SET_ERROR"; payload: string | null }
   | { type: "SET_NOTIFICATIONS"; payload: Notification[] }
   | { type: "ADD_NOTIFICATION"; payload: Notification }
-  | { type: "UPDATE_NOTIFICATION"; payload: { id: string; data: Partial<Notification> } }
-  | { type: "DELETE_NOTIFICATION"; payload: string }
+  | { type: "UPDATE_NOTIFICATION"; payload: { id: number; data: Partial<Notification> } }
+  | { type: "DELETE_NOTIFICATION"; payload: number }
   | { type: "SET_SELECTED_NOTIFICATION"; payload: Notification | null }
   | { type: "SET_SETTINGS"; payload: NotificationSettings }
   | { type: "SET_STATS"; payload: NotificationStats }
@@ -118,7 +118,7 @@ function notificationReducer(state: NotificationState, action: NotificationActio
         notifications: state.notifications.map((notification) => ({
           ...notification,
           read: true,
-          readAt: new Date(),
+          readAt: new Date().toISOString(),
         })),
       }
     case "CLEAR_NOTIFICATIONS":
@@ -131,81 +131,81 @@ function notificationReducer(state: NotificationState, action: NotificationActio
 // Mock data
 const mockNotifications: Notification[] = [
   {
-    id: "1",
-    userId: "user1",
+    id: 1,
+    userId: 1,
     type: NotificationType.DIET,
     category: NotificationCategory.REMINDER,
     title: "Hora do Lanche da Tarde",
     message: "Não esqueça de fazer seu lanche da tarde! Frutas e castanhas estão no seu plano.",
     priority: NotificationPriority.NORMAL,
     read: false,
-    createdAt: new Date(Date.now() - 30 * 60 * 1000),
+    createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
     actionUrl: "/client/diet",
     actionLabel: "Ver Dieta",
     data: {
-      entityId: "meal-3",
+      entityId: 1,
       entityType: "meal",
-      metadata: { mealType: "lanche_tarde" },
+      metadata: JSON.stringify({ mealType: "lanche_tarde" }),
     },
   },
   {
-    id: "2",
-    userId: "user1",
+    id: 2,
+    userId: 1,
     type: NotificationType.WORKOUT,
     category: NotificationCategory.SUCCESS,
     title: "Treino Concluído! 🎉",
     message: "Parabéns! Você completou seu treino de hoje. Continue assim!",
     priority: NotificationPriority.HIGH,
     read: false,
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
     data: {
-      entityId: "workout-1",
+      entityId: 1,
       entityType: "workout",
       progress: 100,
     },
   },
   {
-    id: "3",
-    userId: "user1",
+    id: 3,
+    userId: 1,
     type: NotificationType.ACHIEVEMENT,
     category: NotificationCategory.SUCCESS,
     title: "Nova Conquista Desbloqueada!",
     message: "Você completou 7 dias consecutivos de treino! Parabéns pela dedicação.",
     priority: NotificationPriority.HIGH,
     read: true,
-    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
-    readAt: new Date(Date.now() - 23 * 60 * 60 * 1000),
+    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+    readAt: new Date(Date.now() - 23 * 60 * 60 * 1000).toISOString(),
     data: {
-      entityId: "achievement-7days",
+      entityId: 1,
       entityType: "achievement",
-      metadata: { streak: 7 },
+      metadata: JSON.stringify({ streak: 7 }),
     },
   },
   {
-    id: "4",
-    userId: "user1",
+    id: 4,
+    userId: 1,
     type: NotificationType.MESSAGE,
     category: NotificationCategory.INFO,
     title: "Nova Mensagem do Nutricionista",
     message: "Dr. André enviou uma nova mensagem sobre seu progresso.",
     priority: NotificationPriority.NORMAL,
     read: true,
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-    readAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 30 * 60 * 1000),
+    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    readAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 30 * 60 * 1000).toISOString(),
     actionUrl: "/client/messages",
     actionLabel: "Ver Mensagem",
   },
   {
-    id: "5",
-    userId: "user1",
+    id: 5,
+    userId: 1,
     type: NotificationType.PLAN,
     category: NotificationCategory.WARNING,
     title: "Plano Expirando em Breve",
     message: "Seu plano nutricional expira em 3 dias. Entre em contato para renovar.",
     priority: NotificationPriority.HIGH,
     read: false,
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-    expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
     actionUrl: "/client/plans",
     actionLabel: "Ver Planos",
   },
@@ -279,9 +279,9 @@ interface NotificationContextType {
   state: NotificationState
   loadNotifications: (filters?: NotificationFilters) => Promise<void>
   createNotification: (data: CreateNotificationData) => Promise<void>
-  updateNotification: (id: string, data: UpdateNotificationData) => Promise<void>
-  deleteNotification: (id: string) => Promise<void>
-  markAsRead: (id: string) => Promise<void>
+  updateNotification: (id: number, data: UpdateNotificationData) => Promise<void>
+  deleteNotification: (id: number) => Promise<void>
+  markAsRead: (id: number) => Promise<void>
   markAllAsRead: () => Promise<void>
   loadSettings: () => Promise<void>
   updateSettings: (settings: Partial<NotificationSettings>) => Promise<void>
@@ -311,23 +311,16 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
 
       let filteredNotifications = [...mockNotifications]
 
-      if (filters?.type?.length) {
-        filteredNotifications = filteredNotifications.filter((n) => filters.type!.includes(n.type))
+      if (filters?.type !== undefined) {
+        filteredNotifications = filteredNotifications.filter((n) => n.type === filters.type)
       }
 
-      if (filters?.category?.length) {
-        filteredNotifications = filteredNotifications.filter((n) => filters.category!.includes(n.category))
+      if (filters?.category !== undefined) {
+        filteredNotifications = filteredNotifications.filter((n) => n.category === filters.category)
       }
 
       if (filters?.read !== undefined) {
         filteredNotifications = filteredNotifications.filter((n) => n.read === filters.read)
-      }
-
-      if (filters?.search) {
-        const search = filters.search.toLowerCase()
-        filteredNotifications = filteredNotifications.filter(
-          (n) => n.title.toLowerCase().includes(search) || n.message.toLowerCase().includes(search),
-        )
       }
 
       dispatch({ type: "SET_NOTIFICATIONS", payload: filteredNotifications })
@@ -347,10 +340,10 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
       await new Promise((resolve) => setTimeout(resolve, 500))
 
       const newNotification: Notification = {
-        id: Date.now().toString(),
+        id: Date.now(),
         ...data,
         read: false,
-        createdAt: new Date(),
+        createdAt: new Date().toISOString(),
         priority: data.priority || NotificationPriority.NORMAL,
       }
 
@@ -362,7 +355,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     }
   }
 
-  const updateNotification = async (id: string, data: UpdateNotificationData) => {
+  const updateNotification = async (id: number, data: UpdateNotificationData) => {
     dispatch({ type: "SET_UPDATING", payload: true })
     dispatch({ type: "SET_ERROR", payload: null })
 
@@ -376,7 +369,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     }
   }
 
-  const deleteNotification = async (id: string) => {
+  const deleteNotification = async (id: number) => {
     dispatch({ type: "SET_DELETING", payload: true })
     dispatch({ type: "SET_ERROR", payload: null })
 
@@ -390,14 +383,14 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     }
   }
 
-  const markAsRead = async (id: string) => {
+  const markAsRead = async (id: number) => {
     try {
       await new Promise((resolve) => setTimeout(resolve, 200))
       dispatch({
         type: "UPDATE_NOTIFICATION",
         payload: {
           id,
-          data: { read: true, readAt: new Date() },
+          data: { read: true, readAt: new Date().toISOString() },
         },
       })
     } catch (error) {

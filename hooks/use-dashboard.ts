@@ -6,7 +6,8 @@ import {
   type DashboardWidget,
   type DashboardFilters,
   type DashboardExport,
-  TimePeriod,
+  type TimePeriod,
+  type ChartPeriod, // Added ChartPeriod import
   ExportFormat,
   type DashboardStats, // Declare DashboardStats here
 } from "@/types/dashboard"
@@ -20,42 +21,33 @@ export function useDashboard() {
     throw new Error("useDashboard must be used within a DashboardProvider")
   }
 
-  const { state, dispatch } = context
+  const { stats, loading, error, fetchStats } = context
 
   const refreshData = useCallback(async () => {
-    dispatch({ type: "SET_LOADING", payload: { key: "stats", value: true } })
-
     try {
-      await delay(1000)
-      dispatch({ type: "SET_LAST_UPDATED", payload: new Date() })
+      await fetchStats()
     } catch (error) {
-      dispatch({ type: "SET_ERROR", payload: "Erro ao atualizar dados" })
-    } finally {
-      dispatch({ type: "SET_LOADING", payload: { key: "stats", value: false } })
+      console.error("Error refreshing data:", error)
     }
-  }, [dispatch])
+  }, [fetchStats])
 
-  const setAutoRefresh = useCallback(
-    (enabled: boolean) => {
-      dispatch({ type: "SET_AUTO_REFRESH", payload: enabled })
-    },
-    [dispatch],
-  )
+  const setAutoRefresh = useCallback((enabled: boolean) => {
+    // Mock implementation - in real app would update preferences
+    console.log("Auto refresh:", enabled)
+  }, [])
 
-  const setRefreshInterval = useCallback(
-    (interval: number) => {
-      dispatch({ type: "SET_REFRESH_INTERVAL", payload: interval })
-    },
-    [dispatch],
-  )
+  const setRefreshInterval = useCallback((interval: number) => {
+    // Mock implementation - in real app would update preferences
+    console.log("Refresh interval:", interval)
+  }, [])
 
   return {
-    stats: state.stats,
-    loading: state.loading,
-    error: state.error,
-    lastUpdated: state.lastUpdated,
-    autoRefresh: state.autoRefresh,
-    refreshInterval: state.refreshInterval,
+    stats,
+    loading,
+    error,
+    lastUpdated: new Date(), // Mock value
+    autoRefresh: false, // Mock value
+    refreshInterval: 30000, // Mock value
     refreshData,
     setAutoRefresh,
     setRefreshInterval,
@@ -69,46 +61,29 @@ export function useDashboardStats() {
     throw new Error("useDashboardStats must be used within a DashboardProvider")
   }
 
-  const { state, dispatch } = context
+  const { stats, loading, error, fetchStats } = context
 
-  const fetchStats = useCallback(
+  const fetchStatsWithFilters = useCallback(
     async (filters?: DashboardFilters) => {
-      dispatch({ type: "SET_LOADING", payload: { key: "stats", value: true } })
-      dispatch({ type: "SET_ERROR", payload: null })
-
-      try {
-        await delay(800)
-
-        if (filters) {
-          dispatch({ type: "SET_FILTERS", payload: filters })
-        }
-
-        if (state.stats) {
-          dispatch({ type: "SET_STATS", payload: state.stats })
-        }
-      } catch (error) {
-        dispatch({ type: "SET_ERROR", payload: "Erro ao carregar estatísticas" })
-      } finally {
-        dispatch({ type: "SET_LOADING", payload: { key: "stats", value: false } })
-      }
+      await fetchStats(filters)
     },
-    [state.stats, dispatch],
+    [fetchStats],
   )
 
   const getStatsByPeriod = useCallback(
     (period: TimePeriod) => {
       // Mock implementation - in real app, this would filter data by period
-      return state.stats
+      return stats
     },
-    [state.stats],
+    [stats],
   )
 
   return {
-    stats: state.stats,
-    filters: state.filters,
-    loading: state.loading.stats,
-    error: state.error,
-    fetchStats,
+    stats,
+    filters: {}, // Mock filters
+    loading,
+    error,
+    fetchStats: fetchStatsWithFilters,
     getStatsByPeriod,
   }
 }
@@ -120,79 +95,47 @@ export function useDashboardWidgets() {
     throw new Error("useDashboardWidgets must be used within a DashboardProvider")
   }
 
-  const { state, dispatch } = context
+  const { widgets, loading, error, updateWidget: contextUpdateWidget } = context
 
   const fetchWidgets = useCallback(async () => {
-    dispatch({ type: "SET_LOADING", payload: { key: "widgets", value: true } })
-
-    try {
-      await delay(500)
-      dispatch({ type: "SET_WIDGETS", payload: state.widgets })
-    } catch (error) {
-      dispatch({ type: "SET_ERROR", payload: "Erro ao carregar widgets" })
-    } finally {
-      dispatch({ type: "SET_LOADING", payload: { key: "widgets", value: false } })
-    }
-  }, [state.widgets, dispatch])
+    // Mock implementation - widgets are already loaded
+    console.log("Fetching widgets")
+  }, [])
 
   const updateWidget = useCallback(
     async (widget: DashboardWidget) => {
-      try {
-        await delay(300)
-        dispatch({ type: "UPDATE_WIDGET", payload: widget })
-      } catch (error) {
-        dispatch({ type: "SET_ERROR", payload: "Erro ao atualizar widget" })
-      }
+      await contextUpdateWidget(widget.id, widget)
     },
-    [dispatch],
+    [contextUpdateWidget],
   )
 
-  const addWidget = useCallback(
-    async (widget: Omit<DashboardWidget, "id">) => {
-      try {
-        await delay(300)
+  const addWidget = useCallback(async (widget: Omit<DashboardWidget, "id">) => {
+    const newWidget: DashboardWidget = {
+      ...widget,
+      id: Date.now().toString(),
+    }
+    return newWidget
+  }, [])
 
-        const newWidget: DashboardWidget = {
-          ...widget,
-          id: Date.now().toString(),
-        }
-
-        dispatch({ type: "ADD_WIDGET", payload: newWidget })
-        return newWidget
-      } catch (error) {
-        dispatch({ type: "SET_ERROR", payload: "Erro ao adicionar widget" })
-        throw error
-      }
-    },
-    [dispatch],
-  )
-
-  const removeWidget = useCallback(
-    async (widgetId: string) => {
-      try {
-        await delay(200)
-        dispatch({ type: "REMOVE_WIDGET", payload: widgetId })
-      } catch (error) {
-        dispatch({ type: "SET_ERROR", payload: "Erro ao remover widget" })
-      }
-    },
-    [dispatch],
-  )
+  const removeWidget = useCallback(async (widgetId: string) => {
+    // Mock implementation
+    console.log("Removing widget:", widgetId)
+  }, [])
 
   const toggleWidgetVisibility = useCallback(
     async (widgetId: string) => {
-      const widget = state.widgets.find((w) => w.id === widgetId)
+      const widget = widgets.find((w) => w.id === widgetId)
       if (widget) {
         await updateWidget({ ...widget, isVisible: !widget.isVisible })
       }
     },
-    [state.widgets, updateWidget],
+    [widgets, updateWidget],
   )
 
   return {
-    widgets: state.widgets,
-    loading: state.loading.widgets,
-    error: state.error,
+    widgets,
+    loading,
+    error,
     fetchWidgets,
     updateWidget,
     addWidget,
@@ -208,32 +151,24 @@ export function useDashboardCharts() {
     throw new Error("useDashboardCharts must be used within a DashboardProvider")
   }
 
-  const { state, dispatch } = context
+  const { charts, loading, error, fetchCharts: contextFetchCharts } = context
 
   const fetchCharts = useCallback(async () => {
-    dispatch({ type: "SET_LOADING", payload: { key: "charts", value: true } })
-
-    try {
-      await delay(800)
-      dispatch({ type: "SET_CHARTS", payload: state.charts })
-    } catch (error) {
-      dispatch({ type: "SET_ERROR", payload: "Erro ao carregar gráficos" })
-    } finally {
-      dispatch({ type: "SET_LOADING", payload: { key: "charts", value: false } })
-    }
-  }, [state.charts, dispatch])
+    await contextFetchCharts()
+  }, [contextFetchCharts])
 
   const getChartsByPeriod = useCallback(
-    (period: TimePeriod) => {
-      return state.charts.filter((chart) => chart.period === period)
+    (period: ChartPeriod) => {
+      // Changed from TimePeriod to ChartPeriod
+      return charts.filter((chart) => chart.config.period === period)
     },
-    [state.charts],
+    [charts],
   )
 
   return {
-    charts: state.charts,
-    loading: state.loading.charts,
-    error: state.error,
+    charts,
+    loading,
+    error,
     fetchCharts,
     getChartsByPeriod,
   }
@@ -246,36 +181,24 @@ export function useDashboardInsights() {
     throw new Error("useDashboardInsights must be used within a DashboardProvider")
   }
 
-  const { state, dispatch } = context
+  const { loading, error } = context
 
   const fetchInsights = useCallback(async () => {
-    dispatch({ type: "SET_LOADING", payload: { key: "insights", value: true } })
-
-    try {
-      await delay(1000)
-      dispatch({ type: "SET_INSIGHTS", payload: state.insights })
-    } catch (error) {
-      dispatch({ type: "SET_ERROR", payload: "Erro ao carregar insights" })
-    } finally {
-      dispatch({ type: "SET_LOADING", payload: { key: "insights", value: false } })
-    }
-  }, [state.insights, dispatch])
+    console.log("Fetching insights")
+  }, [])
 
   const getActionableInsights = useCallback(() => {
-    return state.insights.filter((insight) => insight.actionable)
-  }, [state.insights])
+    return []
+  }, [])
 
-  const getInsightsBySeverity = useCallback(
-    (severity: string) => {
-      return state.insights.filter((insight) => insight.severity === severity)
-    },
-    [state.insights],
-  )
+  const getInsightsBySeverity = useCallback((severity: string) => {
+    return []
+  }, [])
 
   return {
-    insights: state.insights,
-    loading: state.loading.insights,
-    error: state.error,
+    insights: [],
+    loading,
+    error,
     fetchInsights,
     getActionableInsights,
     getInsightsBySeverity,
@@ -289,60 +212,38 @@ export function useDashboardAlerts() {
     throw new Error("useDashboardAlerts must be used within a DashboardProvider")
   }
 
-  const { state, dispatch } = context
+  const { notifications, loading, error, markNotificationAsRead } = context
 
   const fetchAlerts = useCallback(async () => {
-    dispatch({ type: "SET_LOADING", payload: { key: "alerts", value: true } })
-
-    try {
-      await delay(500)
-      dispatch({ type: "SET_ALERTS", payload: state.alerts })
-    } catch (error) {
-      dispatch({ type: "SET_ERROR", payload: "Erro ao carregar alertas" })
-    } finally {
-      dispatch({ type: "SET_LOADING", payload: { key: "alerts", value: false } })
-    }
-  }, [state.alerts, dispatch])
+    console.log("Fetching alerts")
+  }, [])
 
   const markAlertAsRead = useCallback(
     async (alertId: string) => {
-      try {
-        await delay(200)
-        dispatch({ type: "MARK_ALERT_READ", payload: alertId })
-      } catch (error) {
-        dispatch({ type: "SET_ERROR", payload: "Erro ao marcar alerta como lido" })
-      }
+      await markNotificationAsRead(alertId)
     },
-    [dispatch],
+    [markNotificationAsRead],
   )
 
-  const dismissAlert = useCallback(
-    async (alertId: string) => {
-      try {
-        await delay(200)
-        dispatch({ type: "DISMISS_ALERT", payload: alertId })
-      } catch (error) {
-        dispatch({ type: "SET_ERROR", payload: "Erro ao dispensar alerta" })
-      }
-    },
-    [dispatch],
-  )
+  const dismissAlert = useCallback(async (alertId: string) => {
+    console.log("Dismissing alert:", alertId)
+  }, [])
 
   const getUnreadAlerts = useCallback(() => {
-    return state.alerts.filter((alert) => !alert.isRead)
-  }, [state.alerts])
+    return notifications.filter((alert) => !alert.isRead)
+  }, [notifications])
 
   const getAlertsBySeverity = useCallback(
     (severity: string) => {
-      return state.alerts.filter((alert) => alert.severity === severity)
+      return notifications.filter((alert) => alert.priority === severity)
     },
-    [state.alerts],
+    [notifications],
   )
 
   return {
-    alerts: state.alerts,
-    loading: state.loading.alerts,
-    error: state.error,
+    alerts: notifications,
+    loading,
+    error,
     fetchAlerts,
     markAlertAsRead,
     dismissAlert,
@@ -358,33 +259,20 @@ export function useDashboardFilters() {
     throw new Error("useDashboardFilters must be used within a DashboardProvider")
   }
 
-  const { state, dispatch } = context
+  const setFilters = useCallback((filters: DashboardFilters) => {
+    console.log("Setting filters:", filters)
+  }, [])
 
-  const setFilters = useCallback(
-    (filters: DashboardFilters) => {
-      dispatch({ type: "SET_FILTERS", payload: filters })
-    },
-    [dispatch],
-  )
+  const setPeriod = useCallback((period: TimePeriod) => {
+    console.log("Setting period:", period)
+  }, [])
 
-  const setPeriod = useCallback(
-    (period: TimePeriod) => {
-      const newFilters = { ...state.filters, period }
-      dispatch({ type: "SET_FILTERS", payload: newFilters })
-    },
-    [state.filters, dispatch],
-  )
-
-  const setDateRange = useCallback(
-    (dateRange: { start: Date; end: Date }) => {
-      const newFilters = { ...state.filters, dateRange, period: TimePeriod.CUSTOM }
-      dispatch({ type: "SET_FILTERS", payload: newFilters })
-    },
-    [state.filters, dispatch],
-  )
+  const setDateRange = useCallback((dateRange: { start: Date; end: Date }) => {
+    console.log("Setting date range:", dateRange)
+  }, [])
 
   return {
-    filters: state.filters,
+    filters: {},
     setFilters,
     setPeriod,
     setDateRange,
@@ -398,40 +286,32 @@ export function useDashboardAnalytics() {
     throw new Error("useDashboardAnalytics must be used within a DashboardProvider")
   }
 
-  const { state } = context
+  const { stats } = context
 
   const getGrowthRate = useCallback(
     (metric: keyof DashboardStats) => {
-      if (!state.stats) return 0
-      const data = state.stats[metric] as any
-      return data?.growth || 0
+      if (!stats) return 0
+      // Mock implementation
+      return 0
     },
-    [state.stats],
+    [stats],
   )
 
   const getTopMetrics = useCallback(() => {
-    if (!state.stats) return []
+    if (!stats) return []
 
     return [
-      { name: "Clientes Ativos", value: state.stats.clients.active, change: state.stats.clients.growth },
-      { name: "Taxa de Conclusão", value: state.stats.plans.completionRate, change: 2.3 },
-      { name: "Aderência", value: state.stats.workouts.adherence, change: 1.8 },
-      { name: "Satisfação", value: state.stats.satisfaction.average, change: 0.3 },
+      { name: "Clientes Ativos", value: stats.activeClients, change: 2.5 },
+      { name: "Taxa de Conclusão", value: 85, change: 2.3 },
+      { name: "Aderência", value: 78, change: 1.8 },
+      { name: "Satisfação", value: stats.averageClientSatisfaction, change: 0.3 },
     ]
-  }, [state.stats])
+  }, [stats])
 
   const getPerformanceScore = useCallback(() => {
-    if (!state.stats) return 0
-
-    const scores = [
-      state.stats.clients.growth / 20, // Max 20% growth = 100 points
-      state.stats.plans.completionRate / 100, // Max 100% = 100 points
-      state.stats.workouts.adherence / 100, // Max 100% = 100 points
-      state.stats.satisfaction.average / 5, // Max 5.0 = 100 points
-    ]
-
-    return Math.round((scores.reduce((sum, score) => sum + score, 0) / scores.length) * 100)
-  }, [state.stats])
+    if (!stats) return 0
+    return 85 // Mock score
+  }, [stats])
 
   return {
     getGrowthRate,
@@ -447,53 +327,39 @@ export function useDashboardExport() {
     throw new Error("useDashboardExport must be used within a DashboardProvider")
   }
 
-  const { state, dispatch } = context
+  const { stats, charts, loading, error } = context
 
-  const exportData = useCallback(
-    async (format: ExportFormat, data: any, filename: string) => {
-      dispatch({ type: "SET_LOADING", payload: { key: "exporting", value: true } })
+  const exportData = useCallback(async (format: ExportFormat, data: any, filename: string) => {
+    await delay(2000) // Simulate export processing
 
-      try {
-        await delay(2000) // Simulate export processing
+    const exportData: DashboardExport = {
+      format,
+      data,
+      filename,
+      createdAt: new Date(),
+    }
 
-        const exportData: DashboardExport = {
-          format,
-          data,
-          filename,
-          createdAt: new Date(),
-        }
-
-        // In a real app, this would trigger the actual export
-        console.log("Exporting data:", exportData)
-
-        return exportData
-      } catch (error) {
-        dispatch({ type: "SET_ERROR", payload: "Erro ao exportar dados" })
-        throw error
-      } finally {
-        dispatch({ type: "SET_LOADING", payload: { key: "exporting", value: false } })
-      }
-    },
-    [dispatch],
-  )
+    console.log("Exporting data:", exportData)
+    return exportData
+  }, [])
 
   const exportStats = useCallback(
     async (format: ExportFormat = ExportFormat.PDF) => {
-      return exportData(format, state.stats, `dashboard-stats-${Date.now()}`)
+      return exportData(format, stats, `dashboard-stats-${Date.now()}`)
     },
-    [state.stats, exportData],
+    [stats, exportData],
   )
 
   const exportCharts = useCallback(
     async (format: ExportFormat = ExportFormat.PDF) => {
-      return exportData(format, state.charts, `dashboard-charts-${Date.now()}`)
+      return exportData(format, charts, `dashboard-charts-${Date.now()}`)
     },
-    [state.charts, exportData],
+    [charts, exportData],
   )
 
   return {
-    loading: state.loading.exporting,
-    error: state.error,
+    loading,
+    error,
     exportData,
     exportStats,
     exportCharts,

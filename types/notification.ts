@@ -111,6 +111,9 @@ export interface NotificationFilters {
   userId?: number
   start?: string
   end?: string
+  search?: string
+  page?: number
+  limit?: number
 }
 
 export interface CreateNotificationData {

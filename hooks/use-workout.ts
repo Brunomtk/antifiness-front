@@ -1,18 +1,16 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { workoutService } from "@/services/workout-service"
-import {
-  type Workout,
-  type CreateWorkoutData,
-  type UpdateWorkoutData,
-  type WorkoutProgress,
-  type WorkoutStats,
-  type WorkoutFilters,
-  type WorkoutListResponse,
-  validateWorkout,
-  validateWorkoutProgress,
-} from "@/services/workout-service"
+import { workoutService, validateWorkout, validateWorkoutProgress } from "@/services/workout-service"
+import type {
+  Workout,
+  CreateWorkoutRequest as CreateWorkoutData,
+  UpdateWorkoutRequest as UpdateWorkoutData,
+  WorkoutProgress,
+  WorkoutStats,
+  WorkoutsQuery as WorkoutFilters,
+  WorkoutsPage as WorkoutListResponse,
+} from "@/types/workout"
 
 interface UseWorkoutListState {
   workouts: Workout[]
@@ -83,7 +81,7 @@ export function useWorkoutList(initialFilters: WorkoutFilters = {}): UseWorkoutL
     }))
 
     try {
-      const response: WorkoutListResponse = await workoutService.getWorkouts(state.filters)
+      const response: WorkoutListResponse = await workoutService.getPaged(state.filters)
 
       setState((prev) => ({
         ...prev,
@@ -122,11 +120,10 @@ export function useWorkoutList(initialFilters: WorkoutFilters = {}): UseWorkoutL
   }, [initialFilters])
 
   const createWorkout = useCallback(async (data: CreateWorkoutData): Promise<Workout | null> => {
-    const errors = validateWorkout(data)
-    if (errors.length > 0) {
+    if (!validateWorkout(data)) {
       setState((prev) => ({
         ...prev,
-        error: { ...prev.error, general: errors.join(", ") },
+        error: { ...prev.error, general: "Dados do treino inválidos" },
       }))
       return null
     }
@@ -138,7 +135,7 @@ export function useWorkoutList(initialFilters: WorkoutFilters = {}): UseWorkoutL
     }))
 
     try {
-      const workout = await workoutService.createWorkout(data)
+      const workout = await workoutService.create(data)
 
       setState((prev) => ({
         ...prev,
@@ -162,11 +159,10 @@ export function useWorkoutList(initialFilters: WorkoutFilters = {}): UseWorkoutL
   }, [])
 
   const updateWorkout = useCallback(async (id: number, data: UpdateWorkoutData): Promise<Workout | null> => {
-    const errors = validateWorkout(data)
-    if (errors.length > 0) {
+    if (!validateWorkout(data)) {
       setState((prev) => ({
         ...prev,
-        error: { ...prev.error, general: errors.join(", ") },
+        error: { ...prev.error, general: "Dados do treino inválidos" },
       }))
       return null
     }
@@ -178,7 +174,7 @@ export function useWorkoutList(initialFilters: WorkoutFilters = {}): UseWorkoutL
     }))
 
     try {
-      const workout = await workoutService.updateWorkout(id, data)
+      const workout = await workoutService.update(id, data)
 
       setState((prev) => ({
         ...prev,
@@ -205,7 +201,7 @@ export function useWorkoutList(initialFilters: WorkoutFilters = {}): UseWorkoutL
     }))
 
     try {
-      await workoutService.deleteWorkout(id)
+      await workoutService.remove(id)
 
       setState((prev) => ({
         ...prev,
@@ -235,7 +231,7 @@ export function useWorkoutList(initialFilters: WorkoutFilters = {}): UseWorkoutL
     }))
 
     try {
-      await workoutService.updateWorkoutStatus(id, status)
+      await workoutService.changeStatus(id, status)
 
       setState((prev) => ({
         ...prev,
@@ -261,12 +257,12 @@ export function useWorkoutList(initialFilters: WorkoutFilters = {}): UseWorkoutL
         difficulty: workout.difficulty,
         estimatedDuration: workout.estimatedDuration,
         estimatedCalories: workout.estimatedCalories,
-        tags: [...workout.tags],
+        tags: workout.tags ? [...workout.tags] : [],
         isTemplate: false,
         notes: workout.notes,
         empresaId: workout.empresaId,
         clientId: workout.clientId,
-        exercises: workout.exercises.map((ex) => ({
+        exercises: workout.exercises?.map((ex) => ({
           exerciseId: ex.exerciseId,
           order: ex.order,
           sets: ex.sets,
@@ -324,7 +320,7 @@ export function useWorkout(id: number) {
     setError(null)
 
     try {
-      const data = await workoutService.getWorkoutById(id)
+      const data = await workoutService.getById(id)
       setWorkout(data)
     } catch (error) {
       setError(error instanceof Error ? error.message : "Erro ao carregar treino")
@@ -351,7 +347,7 @@ export function useWorkoutTemplates(filters: WorkoutFilters = {}) {
     setError(null)
 
     try {
-      const response = await workoutService.getWorkoutTemplates(filters)
+      const response = await workoutService.getTemplates(filters)
       setTemplates(response.workouts || [])
     } catch (error) {
       setError(error instanceof Error ? error.message : "Erro ao carregar templates")
@@ -362,9 +358,8 @@ export function useWorkoutTemplates(filters: WorkoutFilters = {}) {
 
   const instantiateTemplate = useCallback(
     async (templateId: number, data: CreateWorkoutData): Promise<Workout | null> => {
-      const errors = validateWorkout(data)
-      if (errors.length > 0) {
-        setError(errors.join(", "))
+      if (!validateWorkout(data)) {
+        setError("Dados do template inválidos")
         return null
       }
 
@@ -398,7 +393,7 @@ export function useWorkoutProgress(workoutId: number) {
     setError(null)
 
     try {
-      const data = await workoutService.getWorkoutProgress(workoutId)
+      const data = await workoutService.getProgress(workoutId)
       setProgress(data || [])
     } catch (error) {
       setError(error instanceof Error ? error.message : "Erro ao carregar progresso")
@@ -409,14 +404,13 @@ export function useWorkoutProgress(workoutId: number) {
 
   const recordProgress = useCallback(
     async (data: WorkoutProgress): Promise<WorkoutProgress | null> => {
-      const errors = validateWorkoutProgress(data)
-      if (errors.length > 0) {
-        setError(errors.join(", "))
+      if (!validateWorkoutProgress(data)) {
+        setError("Dados do progresso inválidos")
         return null
       }
 
       try {
-        const result = await workoutService.recordWorkoutProgress(workoutId, data)
+        const result = await workoutService.addProgress(workoutId, data)
         await loadProgress() // Recarrega o progresso
         return result
       } catch (error) {
@@ -445,7 +439,7 @@ export function useWorkoutStats(empresaId?: number, clientId?: number) {
     setError(null)
 
     try {
-      const data = await workoutService.getWorkoutStats(empresaId, clientId)
+      const data = await workoutService.getStats({ empresaId, clientId })
       setStats(data)
     } catch (error) {
       setError(error instanceof Error ? error.message : "Erro ao carregar estatísticas")

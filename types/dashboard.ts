@@ -41,6 +41,7 @@ export interface DashboardWidget {
     allowResize?: boolean
     allowMove?: boolean
   }
+  isVisible?: boolean
 }
 
 export interface DashboardLayout {
@@ -120,9 +121,18 @@ export enum TimePeriod {
   YEAR = "year",
 }
 
+export type ChartPeriod = "daily" | "weekly" | "monthly" | "yearly"
+
 export enum ExportFormat {
   PDF = "pdf",
   EXCEL = "excel",
   CSV = "csv",
   JSON = "json",
+}
+
+export interface DashboardExport {
+  format: ExportFormat
+  data: any
+  filename: string
+  createdAt: Date
 }

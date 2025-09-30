@@ -301,7 +301,16 @@ export function useClientWorkout(): UseClientWorkoutReturn {
       }))
 
       try {
-        await api.post(`/Workout/${workoutId}/progress`, data)
+        const user = await getCurrentUser();
+        const progressPayload: any = { ...data };
+        if (user?.clientId != null) {
+          progressPayload.clientId = Number(user.clientId);
+        } else {
+          delete progressPayload.clientId;
+        }
+        // remove undefined/nulls to satisfy strict model binding
+        Object.keys(progressPayload).forEach((k) => (progressPayload[k] == null ? delete progressPayload[k] : null));
+        await api.post(`/Workout/${workoutId}/progress`, progressPayload)
 
         // Recarregar progresso e histórico após salvar
         await Promise.all([loadProgress(workoutId), loadWorkoutHistory()])
@@ -342,7 +351,8 @@ export function useClientWorkout(): UseClientWorkoutReturn {
 
         // Atualizar o exercício específico
         const updatedExercises = workout.exercises.map((ex: any) => {
-          if (ex.exerciseId === exerciseId) {
+          const matches = (ex.id && ex.id === exerciseId) || ex.exerciseId === exerciseId;
+          if (matches) {
             return {
               ...ex,
               isCompleted,
@@ -353,10 +363,29 @@ export function useClientWorkout(): UseClientWorkoutReturn {
         })
 
         // Atualizar o workout
-        await api.put(`/Workout/${workoutId}`, {
-          ...workout,
-          exercises: updatedExercises,
-        })
+        const user = await getCurrentUser();
+        const sanitized = {
+          id: workout.id,
+          clientId: user?.clientId != null ? Number(user.clientId) : undefined,
+          name: workout.name,
+          description: workout.description ?? '',
+          isTemplate: workout.isTemplate ?? false,
+          exercises: updatedExercises.map((ex: any) => ({
+            id: ex.id,
+            exerciseId: ex.exerciseId,
+            order: ex.order,
+            sets: ex.sets,
+            reps: ex.reps,
+            weight: ex.weight,
+            restTime: ex.restTime,
+            notes: ex.notes,
+            isCompleted: !!ex.isCompleted,
+            completedSets: ex.completedSets ?? 0,
+          })),
+        } as any;
+        // drop undefined fields (clientId, optional)
+        Object.keys(sanitized).forEach((k) => (sanitized[k] == null ? delete sanitized[k] : null));
+        await api.put(`/Workout/${workoutId}`, { request: sanitized })
 
         // Recarregar o workout
         await loadWorkout(workoutId)

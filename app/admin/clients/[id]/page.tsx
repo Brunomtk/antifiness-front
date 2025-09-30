@@ -7,10 +7,10 @@ export async function generateStaticParams() {
 }
 
 interface PageProps {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export default async function Page({ params }: PageProps) {
-  const { id } = params
-  return <ClientDetailsPage clientId={id} />
+  const { id } = await params
+  return <ClientDetailsPage />
 }

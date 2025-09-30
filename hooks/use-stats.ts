@@ -2,7 +2,15 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { statsService } from "@/services/stats-service"
-import type { DashboardStats, StatsFilters } from "@/types/stats"
+import type {
+  DashboardStats,
+  StatsFilters,
+  ClientStats,
+  CourseStats,
+  DietStats,
+  WorkoutStats,
+  FeedbackStats,
+} from "@/types/stats"
 
 export function useStats() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
@@ -41,7 +49,7 @@ export function useStats() {
 }
 
 export function useClientStats() {
-  const [stats, setStats] = useState(null)
+  const [stats, setStats] = useState<ClientStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -66,7 +74,7 @@ export function useClientStats() {
 }
 
 export function useCourseStats() {
-  const [stats, setStats] = useState(null)
+  const [stats, setStats] = useState<CourseStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -91,7 +99,7 @@ export function useCourseStats() {
 }
 
 export function useDietStats() {
-  const [stats, setStats] = useState(null)
+  const [stats, setStats] = useState<DietStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -116,7 +124,7 @@ export function useDietStats() {
 }
 
 export function useWorkoutStats() {
-  const [stats, setStats] = useState(null)
+  const [stats, setStats] = useState<WorkoutStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -141,7 +149,7 @@ export function useWorkoutStats() {
 }
 
 export function useFeedbackStats() {
-  const [stats, setStats] = useState(null)
+  const [stats, setStats] = useState<FeedbackStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 

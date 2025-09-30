@@ -1,0 +1,1 @@
+export default function OfflinePage(){return (<main className="p-6 max-w-xl mx-auto"><h1 className="text-2xl font-bold mb-2">Você está offline</h1><p>Alguns recursos podem não carregar. Tente novamente quando a conexão voltar.</p></main>)}

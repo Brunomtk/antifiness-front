@@ -1,15 +1,14 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { exerciseService } from "@/services/exercise-service"
-import {
-  type Exercise,
-  type CreateExerciseData,
-  type UpdateExerciseData,
-  type ExerciseFilters,
-  type ExerciseListResponse,
-  validateExercise,
-} from "@/services/exercise-service"
+import { exerciseService, validateExercise } from "@/services/exercise-service"
+import type {
+  Exercise,
+  CreateExerciseRequest,
+  UpdateExerciseRequest,
+  ExercisesQuery,
+  ExercisesPage,
+} from "@/types/exercise"
 
 interface UseExerciseListState {
   exercises: Exercise[]
@@ -31,14 +30,14 @@ interface UseExerciseListState {
     exercises: string | null
     general: string | null
   }
-  filters: ExerciseFilters
+  filters: ExercisesQuery
 }
 
 interface UseExerciseListActions {
-  updateFilters: (newFilters: Partial<ExerciseFilters>) => void
+  updateFilters: (newFilters: Partial<ExercisesQuery>) => void
   resetFilters: () => void
-  createExercise: (data: CreateExerciseData) => Promise<Exercise | null>
-  updateExercise: (id: number, data: UpdateExerciseData) => Promise<Exercise | null>
+  createExercise: (data: CreateExerciseRequest) => Promise<Exercise | null>
+  updateExercise: (id: number, data: UpdateExerciseRequest) => Promise<Exercise | null>
   deleteExercise: (id: number) => Promise<boolean>
   duplicateExercise: (exercise: Exercise) => Promise<Exercise | null>
   clearError: (key?: keyof UseExerciseListState["error"]) => void
@@ -48,7 +47,7 @@ interface UseExerciseListActions {
 
 type UseExerciseListReturn = UseExerciseListState & UseExerciseListActions
 
-export function useExercise(initialFilters: ExerciseFilters = {}): UseExerciseListReturn {
+export function useExercise(initialFilters: ExercisesQuery = {}): UseExerciseListReturn {
   const [state, setState] = useState<UseExerciseListState>({
     exercises: [],
     pagination: {
@@ -80,7 +79,7 @@ export function useExercise(initialFilters: ExerciseFilters = {}): UseExerciseLi
     }))
 
     try {
-      const response: ExerciseListResponse = await exerciseService.getExercises(state.filters)
+      const response: ExercisesPage = await exerciseService.getPaged(state.filters)
 
       setState((prev) => ({
         ...prev,
@@ -104,7 +103,7 @@ export function useExercise(initialFilters: ExerciseFilters = {}): UseExerciseLi
     }
   }, []) // Remover state.filters da dependência
 
-  const updateFilters = useCallback((newFilters: Partial<ExerciseFilters>) => {
+  const updateFilters = useCallback((newFilters: Partial<ExercisesQuery>) => {
     setState((prev) => ({
       ...prev,
       filters: { ...prev.filters, ...newFilters },
@@ -118,12 +117,12 @@ export function useExercise(initialFilters: ExerciseFilters = {}): UseExerciseLi
     }))
   }, [initialFilters])
 
-  const createExercise = useCallback(async (data: CreateExerciseData): Promise<Exercise | null> => {
-    const errors = validateExercise(data)
-    if (errors.length > 0) {
+  const createExercise = useCallback(async (data: CreateExerciseRequest): Promise<Exercise | null> => {
+    const isValid = validateExercise(data)
+    if (!isValid) {
       setState((prev) => ({
         ...prev,
-        error: { ...prev.error, general: errors.join(", ") },
+        error: { ...prev.error, general: "Dados do exercício inválidos" },
       }))
       return null
     }
@@ -135,7 +134,7 @@ export function useExercise(initialFilters: ExerciseFilters = {}): UseExerciseLi
     }))
 
     try {
-      const exercise = await exerciseService.createExercise(data)
+      const exercise = await exerciseService.create(data)
 
       setState((prev) => ({
         ...prev,
@@ -158,12 +157,12 @@ export function useExercise(initialFilters: ExerciseFilters = {}): UseExerciseLi
     }
   }, [])
 
-  const updateExercise = useCallback(async (id: number, data: UpdateExerciseData): Promise<Exercise | null> => {
-    const errors = validateExercise(data)
-    if (errors.length > 0) {
+  const updateExercise = useCallback(async (id: number, data: UpdateExerciseRequest): Promise<Exercise | null> => {
+    const isValid = validateExercise(data)
+    if (!isValid) {
       setState((prev) => ({
         ...prev,
-        error: { ...prev.error, general: errors.join(", ") },
+        error: { ...prev.error, general: "Dados do exercício inválidos" },
       }))
       return null
     }
@@ -175,7 +174,7 @@ export function useExercise(initialFilters: ExerciseFilters = {}): UseExerciseLi
     }))
 
     try {
-      const exercise = await exerciseService.updateExercise(id, data)
+      const exercise = await exerciseService.update(id, data)
 
       setState((prev) => ({
         ...prev,
@@ -202,7 +201,7 @@ export function useExercise(initialFilters: ExerciseFilters = {}): UseExerciseLi
     }))
 
     try {
-      await exerciseService.deleteExercise(id)
+      await exerciseService.remove(id)
 
       setState((prev) => ({
         ...prev,
@@ -227,17 +226,17 @@ export function useExercise(initialFilters: ExerciseFilters = {}): UseExerciseLi
 
   const duplicateExercise = useCallback(
     async (exercise: Exercise): Promise<Exercise | null> => {
-      const duplicateData: CreateExerciseData = {
+      const duplicateData: CreateExerciseRequest = {
         name: `${exercise.name} (Cópia)`,
         description: exercise.description,
-        muscleGroup: exercise.muscleGroup,
+        instructions: exercise.instructions,
+        muscleGroups: exercise.muscleGroups,
         equipment: exercise.equipment,
         difficulty: exercise.difficulty,
-        instructions: exercise.instructions,
+        category: exercise.category,
         tips: exercise.tips,
-        warnings: exercise.warnings,
-        videoUrl: exercise.videoUrl,
-        imageUrl: exercise.imageUrl,
+        variations: exercise.variations,
+        mediaUrls: exercise.mediaUrls,
         isActive: exercise.isActive,
         empresaId: exercise.empresaId,
       }
@@ -268,7 +267,7 @@ export function useExercise(initialFilters: ExerciseFilters = {}): UseExerciseLi
       }))
 
       try {
-        const response: ExerciseListResponse = await exerciseService.getExercises(state.filters)
+        const response: ExercisesPage = await exerciseService.getPaged(state.filters)
 
         setState((prev) => ({
           ...prev,
@@ -322,7 +321,7 @@ export function useExerciseById(id: number) {
     setError(null)
 
     try {
-      const data = await exerciseService.getExerciseById(id)
+      const data = await exerciseService.getById(id)
       setExercise(data)
     } catch (error) {
       setError(error instanceof Error ? error.message : "Erro ao carregar exercício")

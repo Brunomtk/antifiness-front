@@ -455,7 +455,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
       // Se for o usuário atual, atualizar os dados
       if (state.currentUser && state.currentUser.id === id) {
-        const updatedUser = { ...state.currentUser, ...userData }
+        const updatedUser: User = {
+          ...state.currentUser,
+          ...userData,
+          status: convertStatusToString(userData.status),
+          role: convertRoleToString(userData.type),
+        }
         dispatch({ type: "SET_USER", payload: updatedUser })
       }
 
@@ -621,4 +626,12 @@ export function useUserContext(): UserContextType {
     throw new Error("useUserContext must be used within a UserProvider")
   }
   return context
+}
+
+const convertStatusToString = (status: number): "active" | "inactive" => {
+  return status === 1 ? "active" : "inactive"
+}
+
+const convertRoleToString = (type: number): "admin" | "client" => {
+  return type === 1 ? "admin" : "client"
 }

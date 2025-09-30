@@ -33,8 +33,8 @@ class NotificationService {
       }
 
       if (filters?.read !== undefined) params.append("Read", filters.read.toString())
-      if (filters?.startDate) params.append("StartDate", filters.startDate)
-      if (filters?.endDate) params.append("EndDate", filters.endDate)
+      if (filters?.start) params.append("StartDate", filters.start)
+      if (filters?.end) params.append("EndDate", filters.end)
       if (filters?.search) params.append("Search", filters.search)
       if (filters?.page) params.append("Page", filters.page.toString())
       if (filters?.limit) params.append("Limit", filters.limit.toString())

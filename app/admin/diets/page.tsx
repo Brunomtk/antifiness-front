@@ -499,7 +499,7 @@ export default function DietsPage() {
                 onValueChange={(value) => {
                   const id = Number(value)
                   const c = clients.find((c) => c.id === id)
-                  setNewDiet({ ...newDiet, clientId: id, clientName: c?.name || "" })
+                  setNewDiet({ ...newDiet, clientId: id })
                 }}
               >
                 <SelectTrigger className="col-span-3">

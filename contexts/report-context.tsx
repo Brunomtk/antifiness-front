@@ -2,7 +2,15 @@
 
 import type React from "react"
 import { createContext, useReducer, useCallback } from "react"
-import type { Report, CreateReportData, UpdateReportData, ReportFilters, ReportTemplate } from "@/types/report"
+import type {
+  Report,
+  CreateReportData,
+  UpdateReportData,
+  ReportFilters,
+  ReportTemplate,
+  ReportType,
+} from "@/types/report"
+import { ReportStatus } from "@/types/report"
 
 interface ReportState {
   reports: Report[]
@@ -86,7 +94,7 @@ export function ReportProvider({ children }: { children: React.ReactNode }) {
         {
           id: "1",
           title: "Relatório de Progresso - Maria Silva",
-          type: "progress",
+          type: "PROGRESS" as ReportType,
           clientId: "1",
           clientName: "Maria Silva",
           nutritionistId: "1",
@@ -109,9 +117,11 @@ export function ReportProvider({ children }: { children: React.ReactNode }) {
             charts: [],
             recommendations: ["Manter dieta atual", "Aumentar atividade física"],
           },
-          status: "completed",
+          status: ReportStatus.COMPLETED,
           createdAt: new Date("2024-02-01"),
           updatedAt: new Date("2024-02-01"),
+          recipients: [],
+          createdBy: "1",
         },
       ]
 
@@ -129,7 +139,7 @@ export function ReportProvider({ children }: { children: React.ReactNode }) {
         {
           id: "1",
           name: "Relatório de Progresso Padrão",
-          type: "progress",
+          type: "PROGRESS" as ReportType,
           description: "Template padrão para relatórios de progresso",
           structure: {
             sections: ["Resumo", "Métricas", "Gráficos", "Recomendações"],
@@ -137,6 +147,9 @@ export function ReportProvider({ children }: { children: React.ReactNode }) {
             charts: ["Evolução do Peso", "Composição Corporal"],
           },
           isDefault: true,
+          createdBy: "1",
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       ]
 
@@ -155,9 +168,11 @@ export function ReportProvider({ children }: { children: React.ReactNode }) {
         ...data,
         clientName: "Cliente",
         nutritionistId: "1",
-        status: "draft",
+        status: ReportStatus.DRAFT,
         createdAt: new Date(),
         updatedAt: new Date(),
+        recipients: [],
+        createdBy: "1",
       }
 
       dispatch({ type: "ADD_REPORT", payload: newReport })
@@ -170,9 +185,19 @@ export function ReportProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: "SET_LOADING", payload: true })
     try {
       // Mock update - replace with actual API call
-      const updatedData = {
-        ...data,
+      const updatedData: Partial<Report> = {
         updatedAt: new Date(),
+      }
+
+      // Map UpdateReportData properties to Report properties
+      if (data.title) {
+        updatedData.title = data.title
+      }
+      if (data.data) {
+        updatedData.data = data.data as any // Cast to avoid deep partial issues
+      }
+      if (data.status) {
+        updatedData.status = data.status
       }
 
       dispatch({ type: "UPDATE_REPORT", payload: { id, data: updatedData } })
@@ -198,7 +223,7 @@ export function ReportProvider({ children }: { children: React.ReactNode }) {
       const generatedReport: Report = {
         id: Date.now().toString(),
         title: `Relatório Gerado - ${new Date().toLocaleDateString()}`,
-        type: type as any,
+        type: type as ReportType,
         clientId,
         clientName: "Cliente",
         nutritionistId: "1",
@@ -209,9 +234,11 @@ export function ReportProvider({ children }: { children: React.ReactNode }) {
           charts: [],
           recommendations: [],
         },
-        status: "draft",
+        status: ReportStatus.DRAFT,
         createdAt: new Date(),
         updatedAt: new Date(),
+        recipients: [],
+        createdBy: "1",
       }
 
       dispatch({ type: "ADD_REPORT", payload: generatedReport })
@@ -224,7 +251,7 @@ export function ReportProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: "SET_LOADING", payload: true })
     try {
       // Mock sending - replace with actual API call
-      dispatch({ type: "UPDATE_REPORT", payload: { id, data: { status: "sent" } } })
+      dispatch({ type: "UPDATE_REPORT", payload: { id, data: { status: ReportStatus.SENT } } })
     } catch (error) {
       dispatch({ type: "SET_ERROR", payload: "Erro ao enviar relatório" })
     }

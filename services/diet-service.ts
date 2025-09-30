@@ -10,6 +10,7 @@ import type {
   DietFilters,
 } from "@/types/diet"
 import { api } from "@/lib/api"
+import { timeStringToTicks } from "@/lib/utils"
 
 // Token & headers helpers
 const getAuthToken = (): string => {
@@ -82,27 +83,26 @@ class DietService {
     return response.data
   }
 
-  
   async updateMeal(dietId: number, mealId: number, data: Partial<CreateMealRequest>): Promise<ApiMeal> {
     // Normalize scheduledTime to ticks object for V2 backend
-    let payload: any = { ...data };
-    const st: any = (data as any)?.scheduledTime;
+    const payload: any = { ...data }
+    const st: any = (data as any)?.scheduledTime
     if (typeof st === "string" && st.trim() !== "") {
-      payload.scheduledTime = { ticks: timeStringToTicks(st) };
+      payload.scheduledTime = { ticks: timeStringToTicks(st) }
     } else if (typeof st === "number" && Number.isFinite(st)) {
-      payload.scheduledTime = { ticks: st };
+      payload.scheduledTime = { ticks: st }
     } else if (st && typeof st === "object" && typeof st.ticks === "number") {
-      payload.scheduledTime = st;
+      payload.scheduledTime = st
     } else if (st == null) {
       // leave undefined to avoid overriding on server
-      delete payload.scheduledTime;
+      delete payload.scheduledTime
     }
 
     // Ensure Accept JSON (avoid Swagger default text/plain)
     const response = await api.put(`/Diet/${dietId}/meals/${mealId}`, payload, {
-      headers: { Accept: "application/json" }
-    });
-    return response.data;
+      headers: { Accept: "application/json" },
+    })
+    return response.data
   }
 
   async deleteMeal(dietId: number, mealId: number): Promise<void> {

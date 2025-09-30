@@ -1,4 +1,5 @@
 import type React from "react"
+import PWARegister from "@/components/PWARegister"
 import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
@@ -20,7 +21,8 @@ export const metadata: Metadata = {
   title: "Antifitness",
   description: "Antifitness app",
   manifest: "/manifest.json",
-  icons: { icon: "/favicon.ico", apple: "/apple-touch-icon.png" }
+  icons: { icon: "/favicon.ico", apple: "/apple-touch-icon.png" },
+    generator: 'v0.app'
 };
 
 
@@ -33,6 +35,8 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#0f172a" />
         <link rel="icon" href="/favicon.ico" />
         <meta name="application-name" content="Anti-Fitness" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -66,6 +70,7 @@ export default function RootLayout({
             <PageTransition>{children}</PageTransition>
           </AppProvider>
         </ThemeProvider>
+              <PWARegister />
       </body>
     </html>
   )

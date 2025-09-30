@@ -109,6 +109,135 @@ export type UpdateWorkoutRequest = CreateWorkoutRequest
 export type CreateWorkoutProgressRequest = Omit<WorkoutProgress, "id" | "workoutName" | "createdAt"> & {
   exerciseProgress?: WorkoutProgressExercise[]
 }
+
+export type WorkoutTemplate = {
+  id: string
+  name: string
+  description?: string
+  type: WorkoutType
+  difficulty: WorkoutDifficulty
+  estimatedDuration: number
+  estimatedCalories: number
+  exercises: WorkoutExercise[]
+  muscleGroups: MuscleGroup[]
+  equipment: Equipment[]
+  tags: string[]
+  isPublic: boolean
+  createdBy: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export type WorkoutPlan = {
+  id: string
+  name: string
+  description?: string
+  goal: WorkoutGoal
+  level: WorkoutLevel
+  duration: number // weeks
+  workoutsPerWeek: number
+  workouts: {
+    dayOfWeek: number
+    workoutId: string
+    workout: Workout
+  }[]
+  clientId: string
+  nutritionistId: string
+  startDate: Date
+  endDate: Date
+  status: WorkoutPlanStatus
+  progress: {
+    completedWorkouts: number
+    totalWorkouts: number
+    completionRate: number
+    currentWeek: number
+    totalWeeks: number
+    averageRating: number
+    totalCaloriesBurned: number
+    personalRecords: number
+    adherenceRate: number
+    lastWorkoutDate: Date
+    nextWorkoutDate: Date
+  }
+  createdAt: Date
+  updatedAt: Date
+}
+
+export type WorkoutFilters = {
+  type?: WorkoutType[]
+  difficulty?: WorkoutDifficulty[]
+  status?: WorkoutStatus[]
+  muscleGroups?: MuscleGroup[]
+  equipment?: Equipment[]
+  tags?: string[]
+  search?: string
+  dateStart?: Date
+  dateEnd?: Date
+  isTemplate?: boolean
+  createdBy?: string
+  assignedTo?: string
+}
+
+export type WorkoutPlanFilters = {
+  goal?: WorkoutGoal[]
+  level?: WorkoutLevel[]
+  status?: WorkoutPlanStatus[]
+  search?: string
+  clientId?: string
+  nutritionistId?: string
+  startDate?: Date
+  endDate?: Date
+}
+
+export type WorkoutAnalytics = {
+  totalWorkouts: number
+  completedWorkouts: number
+  averageWorkoutsPerWeek: number
+  totalDuration: number
+  averageDuration: number
+  totalCalories: number
+  averageCalories: number
+  averageRating: number
+  completionRate: number
+  adherenceRate: number
+  personalRecords: number
+  currentStreak: number
+  longestStreak: number
+  workoutsByType: {
+    type: WorkoutType
+    count: number
+    percentage: number
+  }[]
+  workoutsByDifficulty: {
+    difficulty: WorkoutDifficulty
+    count: number
+    percentage: number
+  }[]
+  muscleGroupFrequency: {
+    muscleGroup: MuscleGroup
+    count: number
+    percentage: number
+  }[]
+  equipmentUsage: {
+    equipment: Equipment
+    count: number
+    percentage: number
+  }[]
+  monthlyProgress: {
+    month: string
+    workouts: number
+    duration: number
+    calories: number
+    averageRating: number
+  }[]
+  weeklyProgress: {
+    week: string
+    workouts: number
+    duration: number
+    calories: number
+  }[]
+}
+
 // ---- Enums adicionados para compatibilidade com WorkoutContext e demais telas ----
 export enum MuscleGroup {
   CHEST = "CHEST",

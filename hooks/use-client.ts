@@ -13,6 +13,7 @@ import {
 } from "@/services/client-service"
 import {
   type Client,
+  type ClientsResponse,
   type CreateClientData,
   type UpdateClientData,
   type ClientFilters,
@@ -60,14 +61,44 @@ export function useClients() {
           orderDirection: filters?.orderDirection || "asc",
         }
 
-        console.log("Buscando clientes com filtros:", apiFilters)
+        console.log("[v0] Buscando clientes com filtros:", apiFilters)
         const response = await clientService.getClients(apiFilters)
-        console.log("Resposta da API:", response)
+        console.log("[v0] Resposta da API:", response)
 
-        dispatch({ type: "SET_CLIENTS", payload: response })
+        let clients: Client[] = []
+
+        if (response && typeof response === "object") {
+          if (Array.isArray(response.results)) {
+            clients = response.results
+          } else if (Array.isArray(response)) {
+            clients = response
+          }
+        }
+
+        console.log("[v0] Processed clients:", clients)
+
+        const mapped: ClientsResponse = {
+          clients: clients,
+          totalCount: response.totalRecords ?? response.rowCount ?? clients.length,
+          pageNumber: response.currentPage || 1,
+          pageSize: response.pageSize || 20,
+          totalPages:
+            response.totalPages ??
+            response.pageCount ??
+            Math.max(
+              1,
+              Math.ceil((response.totalRecords ?? response.rowCount ?? clients.length) / (response.pageSize || 20)),
+            ),
+          hasPreviousPage: response.hasPreviousPage ?? (response.currentPage || 1) > 1,
+          hasNextPage:
+            response.hasNextPage ?? (response.totalPages ?? response.pageCount ?? 1) > (response.currentPage || 1),
+        }
+
+        console.log("[v0] Mapped response:", mapped)
+        dispatch({ type: "SET_CLIENTS", payload: mapped })
         return response
       } catch (error) {
-        console.error("Erro no hook useClients:", error)
+        console.error("[v0] Erro no hook useClients:", error)
         const errorMessage = error instanceof Error ? error.message : "Erro ao carregar clientes"
         dispatch({ type: "SET_ERROR", payload: errorMessage })
 
@@ -139,7 +170,9 @@ export function useClients() {
             throw new Error("Usuário não autenticado")
           }
         }
-
+        const formPrefsCreate = ((data as any)?.preferences ?? undefined) as
+          | { dislikedFood?: string[]; favoriteFood?: string[] }
+          | undefined
         const request: CreateClientRequest = {
           name: data.name,
           email: data.email,
@@ -151,47 +184,14 @@ export function useClients() {
           currentWeight: data.currentWeight,
           targetWeight: data.targetWeight,
           activityLevel: data.activityLevel,
+          kanbanStage: data.kanbanStage,
           empresaId: data.empresaId,
-          goals: data.goals.map((goal) => ({
-            type: goal.type,
-            description: goal.description,
-            targetValue: goal.targetValue,
-            targetDate: goal.targetDate,
-            priority: goal.priority,
-            status: goal.status,
-          })),
-          measurements: data.measurements.map((measurement) => ({
-            date: measurement.date,
-            weight: measurement.weight,
-            bodyFat: measurement.bodyFat || 0,
-            muscleMass: measurement.muscleMass || 0,
-            waist: measurement.waist || 0,
-            chest: measurement.chest || 0,
-            arms: measurement.arms || 0,
-            thighs: measurement.thighs || 0,
-            notes: measurement.notes,
-          })),
-          preferences: {
-            dietaryRestrictions: data.preferences.dietaryRestrictions,
-            favoriteFood: data.preferences.favoriteFood,
-            dislikedFood: data.preferences.dislikedFood,
-            mealTimes: {
-              breakfast: data.preferences.mealTimes.breakfast,
-              lunch: data.preferences.mealTimes.lunch,
-              dinner: data.preferences.mealTimes.dinner,
-              snacks: data.preferences.mealTimes.snacks,
-            },
-            workoutPreferences: {
-              types: data.preferences.workoutPreferences.types,
-              duration: data.preferences.workoutPreferences.duration,
-              frequency: data.preferences.workoutPreferences.frequency,
-              timeOfDay: data.preferences.workoutPreferences.timeOfDay,
-            },
-          },
+          notes: data.notes,
+          goals: data.goals as string[] | undefined,
+          dislikedFood: formPrefsCreate?.dislikedFood ?? (data as any)?.dislikedFood,
+          preferredFood: formPrefsCreate?.favoriteFood ?? (data as any)?.preferredFood,
           medicalConditions: data.medicalConditions,
-          allergies: data.allergies,
         }
-
         console.log("Criando cliente:", request)
         const newClient = await clientService.createClient(request)
         console.log("Cliente criado:", newClient)
@@ -231,7 +231,9 @@ export function useClients() {
             throw new Error("Usuário não autenticado")
           }
         }
-
+        const formPrefsUpdate = ((data as any)?.preferences ?? undefined) as
+          | { dislikedFood?: string[]; favoriteFood?: string[] }
+          | undefined
         const request: UpdateClientRequest = {
           name: data.name,
           email: data.email,
@@ -244,47 +246,13 @@ export function useClients() {
           targetWeight: data.targetWeight,
           activityLevel: data.activityLevel,
           empresaId: data.empresaId,
-          status: data.status,
+
           kanbanStage: data.kanbanStage,
-          planId: data.planId,
-          goals: data.goals.map((goal) => ({
-            type: goal.type,
-            description: goal.description,
-            targetValue: goal.targetValue,
-            targetDate: goal.targetDate,
-            priority: goal.priority,
-            status: goal.status,
-          })),
-          measurements: data.measurements.map((measurement) => ({
-            date: measurement.date,
-            weight: measurement.weight,
-            bodyFat: measurement.bodyFat || 0,
-            muscleMass: measurement.muscleMass || 0,
-            waist: measurement.waist || 0,
-            chest: measurement.chest || 0,
-            arms: measurement.arms || 0,
-            thighs: measurement.thighs || 0,
-            notes: measurement.notes,
-          })),
-          preferences: {
-            dietaryRestrictions: data.preferences.dietaryRestrictions,
-            favoriteFood: data.preferences.favoriteFood,
-            dislikedFood: data.preferences.dislikedFood,
-            mealTimes: {
-              breakfast: data.preferences.mealTimes.breakfast,
-              lunch: data.preferences.mealTimes.lunch,
-              dinner: data.preferences.mealTimes.dinner,
-              snacks: data.preferences.mealTimes.snacks,
-            },
-            workoutPreferences: {
-              types: data.preferences.workoutPreferences.types,
-              duration: data.preferences.workoutPreferences.duration,
-              frequency: data.preferences.workoutPreferences.frequency,
-              timeOfDay: data.preferences.workoutPreferences.timeOfDay,
-            },
-          },
+
+          goals: data.goals as string[] | undefined,
+          dislikedFood: formPrefsUpdate?.dislikedFood ?? (data as any)?.dislikedFood,
+          preferredFood: formPrefsUpdate?.favoriteFood ?? (data as any)?.preferredFood,
           medicalConditions: data.medicalConditions,
-          allergies: data.allergies,
         }
 
         console.log("Atualizando cliente:", id, request)
@@ -615,8 +583,8 @@ export const ACTIVITY_LEVEL_OPTIONS = [
   { value: ActivityLevel.SEDENTARY, label: "Sedentário" },
   { value: ActivityLevel.LIGHT, label: "Leve" },
   { value: ActivityLevel.MODERATE, label: "Moderado" },
-  { value: ActivityLevel.ACTIVE, label: "Ativo" },
-  { value: ActivityLevel.VERY_ACTIVE, label: "Muito ativo" },
+  { value: ActivityLevel.HIGH, label: "Ativo" },
+  { value: ActivityLevel.VERY_HIGH, label: "Muito ativo" },
 ]
 
 export const PRIORITY_OPTIONS = [

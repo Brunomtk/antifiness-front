@@ -36,6 +36,8 @@ export default function WorkoutDetailPage() {
   const router = useRouter()
   const id = Number(params?.id)
   const [loading, setLoading] = React.useState(true)
+const [clientAvatar, setClientAvatar] = React.useState<string | undefined>(undefined)
+
   const [workout, setWorkout] = React.useState<Workout | null>(null)
   const [clientName, setClientName] = React.useState<string>("")
   const [companyName, setCompanyName] = React.useState<string>("")
@@ -50,14 +52,16 @@ export default function WorkoutDetailPage() {
         try {
           const client = await clientService.getById(data.clientId)
           setClientName(client.name || "")
-        } catch (err) {
+          setClientAvatar((client as any)?.avatar || undefined)
+} catch (err) {
           console.error("Error loading client:", err)
         }
       }
 
       if (data.empresaId) {
         try {
-          const companies = await companyService.getAll()
+          const response = await companyService.getCompanies()
+          const companies: any[] = Array.isArray(response) ? response : (response?.result ?? [])
           const company = companies.find((c) => c.id === data.empresaId)
           setCompanyName(company?.name || "")
         } catch (err) {
@@ -154,7 +158,7 @@ export default function WorkoutDetailPage() {
         <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16 ring-4 ring-white/20 shadow-lg">
-              <AvatarImage src={workout.clientAvatar || "/placeholder.svg"} />
+              <AvatarImage src={clientAvatar ?? "/placeholder.svg"} />
               <AvatarFallback className="bg-white/20 text-white text-xl font-bold">
                 <Dumbbell className="h-8 w-8" />
               </AvatarFallback>
@@ -163,19 +167,19 @@ export default function WorkoutDetailPage() {
             <div className="space-y-2">
               <div className="flex items-center gap-3">
                 <h1 className="text-3xl font-bold tracking-tight">{workout.name}</h1>
-                <Badge className={`${getWorkoutStatusColor(workout.status)} text-white border-0`}>
-                  {getWorkoutStatusLabel(workout.status)}
+                <Badge className={`${getWorkoutStatusColor((workout.status ?? 0) as number)} text-white border-0`}>
+                  {getWorkoutStatusLabel((workout.status ?? 0) as number)}
                 </Badge>
               </div>
 
               <div className="flex flex-wrap items-center gap-4 text-sm text-orange-100">
                 <div className="flex items-center gap-1">
                   <User className="h-4 w-4" />
-                  <span>{clientName || workout.clientName || "Cliente não definido"}</span>
+                  <span>{clientName || "Cliente não definido"}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
-                  <span>Criado em {new Date(workout.createdDate || Date.now()).toLocaleDateString()}</span>
+                  <span>Criado em {new Date((workout as any)?.createdAt ?? Date.now()).toLocaleDateString()}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Target className="h-4 w-4" />
@@ -201,7 +205,7 @@ export default function WorkoutDetailPage() {
                 <DialogHeader>
                   <DialogTitle>Editar Treino</DialogTitle>
                 </DialogHeader>
-                <WorkoutForm mode="edit" initial={{ ...workout, companyName }} workoutId={id} />
+                <WorkoutForm mode="edit" initial={workout} workoutId={id} />
               </DialogContent>
             </Dialog>
             <Button
@@ -273,7 +277,7 @@ export default function WorkoutDetailPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-purple-100 text-sm font-medium">Progresso</p>
-                <p className="text-2xl font-bold">{workout.completionPercentage || 0}%</p>
+                <p className="text-2xl font-bold">{((workout as any)?.completionPercentage ?? 0)}%</p>
                 <p className="text-xs text-purple-200">Concluído</p>
               </div>
               <div className="rounded-full bg-white/20 p-3">
@@ -321,7 +325,7 @@ export default function WorkoutDetailPage() {
                     <CardContent className="space-y-3">
                       <div className="flex justify-between">
                         <span className="text-sm font-medium text-gray-600">Nome:</span>
-                        <span className="text-sm">{clientName || workout.clientName || "Não definido"}</span>
+                        <span className="text-sm">{clientName || "Não definido"}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm font-medium text-gray-600">Empresa:</span>
@@ -348,8 +352,8 @@ export default function WorkoutDetailPage() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm font-medium text-gray-600">Status:</span>
-                        <Badge className={`${getWorkoutStatusColor(workout.status)} text-white border-0`}>
-                          {getWorkoutStatusLabel(workout.status)}
+                        <Badge className={`${getWorkoutStatusColor((workout.status ?? 0) as number)} text-white border-0`}>
+                          {getWorkoutStatusLabel((workout.status ?? 0) as number)}
                         </Badge>
                       </div>
                     </CardContent>
@@ -387,7 +391,7 @@ export default function WorkoutDetailPage() {
             </TabsContent>
 
             <TabsContent value="exercises" className="mt-6">
-              <WorkoutForm mode="edit" initial={{ ...workout, companyName }} workoutId={id} />
+              <WorkoutForm mode="edit" initial={workout} workoutId={id} />
             </TabsContent>
 
             <TabsContent value="progress" className="mt-6">

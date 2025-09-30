@@ -152,6 +152,9 @@ export interface ClientFilters {
   orderDirection?: "asc" | "desc"
   startDate?: string
   endDate?: string
+  planId?: number
+
+  empresaId?: number
 }
 
 export interface ClientStats {
@@ -172,3 +175,8 @@ export interface ClientsResponse {
   hasPreviousPage: boolean
   hasNextPage: boolean
 }
+
+
+// Backward-compatible aliases
+export type CreateClientData = CreateClientRequest;
+export type UpdateClientData = UpdateClientRequest;

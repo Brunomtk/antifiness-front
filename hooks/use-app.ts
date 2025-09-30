@@ -4,7 +4,7 @@ import { useUser } from "./use-user"
 import { useClient } from "./use-client"
 import { usePlan } from "./use-plan"
 import { useDiet } from "./use-diet"
-import { useWorkout } from "./use-workout"
+import { useWorkoutList } from "./use-workout" // Changed useWorkout() to useWorkoutList() since useWorkout requires an id parameter
 import { useCourse } from "./use-course"
 import { useFeedback } from "./use-feedback"
 import { useReport } from "./use-report"
@@ -17,7 +17,7 @@ export function useApp() {
   const client = useClient()
   const plan = usePlan()
   const diet = useDiet()
-  const workout = useWorkout()
+  const workout = useWorkoutList()
   const course = useCourse()
   const feedback = useFeedback()
   const report = useReport()

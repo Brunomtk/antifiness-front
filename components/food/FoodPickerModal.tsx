@@ -30,14 +30,41 @@ type Props = {
 export default function FoodPickerModal({ open, onOpenChange, onConfirm, initial = [] }: Props) {
   const { foods, fetchFoods, loading } = useFoods()
   const [query, setQuery] = React.useState("")
-  const [selected, setSelected] = React.useState<CreateMealFoodRequest[]>(initial)
+  const [selected, setSelected] = React.useState<CreateMealFoodRequest[]>([])
   const [selectedCategory, setSelectedCategory] = React.useState<number | null>(null)
 
   React.useEffect(() => {
     if (open) {
+      console.log("[v0] FoodPickerModal opened with initial foods:", initial)
+      console.log("[v0] Initial foods count:", initial.length)
+
+      // Always reset to exactly the initial foods provided - create deep copy
+      const initialCopy = initial.map((food) => ({
+        foodId: food.foodId,
+        quantity: food.quantity,
+        unit: food.unit,
+      }))
+
+      console.log("[v0] Setting selected foods to:", initialCopy)
+      setSelected(initialCopy)
+      setQuery("") // Reset search
+      setSelectedCategory(null) // Reset category filter
       fetchFoods()
     }
   }, [open, fetchFoods])
+
+  React.useEffect(() => {
+    if (open && initial) {
+      console.log("[v0] Initial foods updated while modal open:", initial)
+      const initialCopy = initial.map((food) => ({
+        foodId: food.foodId,
+        quantity: food.quantity,
+        unit: food.unit,
+      }))
+      console.log("[v0] Updating selected foods to match initial:", initialCopy)
+      setSelected(initialCopy)
+    }
+  }, [initial, open])
 
   const categoryOptions = foodService.getFoodCategoryOptions()
 
@@ -84,7 +111,18 @@ export default function FoodPickerModal({ open, onOpenChange, onConfirm, initial
   }
 
   const handleConfirm = () => {
-    onConfirm(selected)
+    console.log("[v0] FoodPickerModal confirming selection")
+    console.log("[v0] Selected foods before confirmation:", selected)
+    console.log("[v0] Number of selected foods:", selected.length)
+
+    const cleanSelected = selected.map((food) => ({
+      foodId: food.foodId,
+      quantity: food.quantity,
+      unit: food.unit,
+    }))
+
+    console.log("[v0] Clean selected foods for confirmation:", cleanSelected)
+    onConfirm(cleanSelected)
     onOpenChange(false)
   }
 
@@ -236,14 +274,6 @@ export default function FoodPickerModal({ open, onOpenChange, onConfirm, initial
                                 </Badge>
                               )}
                             </div>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => removeFood(item.foodId)}
-                              className="h-6 w-6"
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
                           </div>
 
                           <div className="grid grid-cols-2 gap-2">

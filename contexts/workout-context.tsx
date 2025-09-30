@@ -2,26 +2,16 @@
 
 import type React from "react"
 import { createContext, useContext, useReducer, type ReactNode } from "react"
-import {
-  type Workout,
-  type WorkoutPlan,
-  type Exercise,
-  type WorkoutProgress,
-  type WorkoutTemplate,
-  type WorkoutStats,
-  type WorkoutAnalytics,
-  type WorkoutFilters,
-  type WorkoutPlanFilters,
-  WorkoutType,
-  WorkoutDifficulty,
-  WorkoutStatus,
-  WorkoutGoal,
-  WorkoutLevel,
-  WorkoutPlanStatus,
-  ExerciseDifficulty,
-  ExerciseCategory,
-  MuscleGroup,
-  Equipment,
+import type {
+  Workout,
+  WorkoutPlan,
+  Exercise,
+  WorkoutProgress,
+  WorkoutTemplate,
+  WorkoutStats,
+  WorkoutAnalytics,
+  WorkoutFilters,
+  WorkoutPlanFilters,
 } from "@/types/workout"
 
 interface WorkoutState {
@@ -188,7 +178,7 @@ function workoutReducer(state: WorkoutState, action: WorkoutAction): WorkoutStat
     case "DELETE_WORKOUT":
       return {
         ...state,
-        workouts: state.workouts.filter((workout) => workout.id !== action.payload),
+        workouts: state.workouts.filter((workout) => workout.id !== Number(action.payload)),
       }
     case "ADD_WORKOUT_PLAN":
       return { ...state, workoutPlans: [...state.workoutPlans, action.payload] }
@@ -212,7 +202,7 @@ function workoutReducer(state: WorkoutState, action: WorkoutAction): WorkoutStat
     case "DELETE_EXERCISE":
       return {
         ...state,
-        exercises: state.exercises.filter((exercise) => exercise.id !== action.payload),
+        exercises: state.exercises.filter((exercise) => exercise.id !== Number(action.payload)),
       }
     case "ADD_WORKOUT_PROGRESS":
       return { ...state, workoutProgress: [...state.workoutProgress, action.payload] }
@@ -233,148 +223,8 @@ const WorkoutContext = createContext<{
   dispatch: React.Dispatch<WorkoutAction>
 } | null>(null)
 
-// Mock data
-const mockExercises: Exercise[] = [
-  {
-    id: "1",
-    name: "Supino Reto",
-    description: "Exercício para desenvolvimento do peitoral",
-    instructions: [
-      "Deite-se no banco com os pés apoiados no chão",
-      "Segure a barra com pegada pronada",
-      "Desça a barra até o peito",
-      "Empurre a barra para cima",
-    ],
-    muscleGroups: [MuscleGroup.CHEST, MuscleGroup.TRICEPS, MuscleGroup.SHOULDERS],
-    equipment: [Equipment.BARBELL, Equipment.BENCH],
-    difficulty: ExerciseDifficulty.INTERMEDIATE,
-    category: ExerciseCategory.COMPOUND,
-    tips: ["Mantenha os ombros retraídos", "Controle a descida"],
-    variations: ["Supino inclinado", "Supino declinado"],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "2",
-    name: "Agachamento",
-    description: "Exercício fundamental para pernas e glúteos",
-    instructions: [
-      "Posicione a barra nos ombros",
-      "Desça flexionando quadris e joelhos",
-      "Mantenha o peito erguido",
-      "Suba empurrando o chão",
-    ],
-    muscleGroups: [MuscleGroup.QUADRICEPS, MuscleGroup.GLUTES, MuscleGroup.HAMSTRINGS],
-    equipment: [Equipment.BARBELL],
-    difficulty: ExerciseDifficulty.INTERMEDIATE,
-    category: ExerciseCategory.COMPOUND,
-    tips: ["Mantenha os joelhos alinhados", "Desça até 90 graus"],
-    variations: ["Agachamento frontal", "Agachamento búlgaro"],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-]
-
-const mockWorkouts: Workout[] = [
-  {
-    id: "1",
-    name: "Treino de Peito e Tríceps",
-    description: "Treino focado no desenvolvimento do peitoral e tríceps",
-    type: WorkoutType.STRENGTH,
-    difficulty: WorkoutDifficulty.INTERMEDIATE,
-    duration: 60,
-    exercises: [
-      {
-        id: "1",
-        exerciseId: "1",
-        exercise: mockExercises[0],
-        sets: 4,
-        reps: "8-10",
-        weight: 80,
-        restTime: 120,
-        order: 1,
-        completed: false,
-        completedSets: 0,
-      },
-    ],
-    muscleGroups: [MuscleGroup.CHEST, MuscleGroup.TRICEPS],
-    equipment: [Equipment.BARBELL, Equipment.BENCH],
-    calories: 300,
-    status: WorkoutStatus.SCHEDULED,
-    tags: ["força", "hipertrofia"],
-    isTemplate: false,
-    createdBy: "nutritionist-1",
-    assignedTo: ["client-1"],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-]
-
-const mockWorkoutPlans: WorkoutPlan[] = [
-  {
-    id: "1",
-    name: "Plano de Hipertrofia - 12 Semanas",
-    description: "Plano completo para ganho de massa muscular",
-    goal: WorkoutGoal.MUSCLE_GAIN,
-    level: WorkoutLevel.INTERMEDIATE,
-    duration: 12,
-    workoutsPerWeek: 4,
-    workouts: [{ dayOfWeek: 1, workoutId: "1", workout: mockWorkouts[0] }],
-    clientId: "client-1",
-    nutritionistId: "nutritionist-1",
-    startDate: new Date(),
-    endDate: new Date(Date.now() + 12 * 7 * 24 * 60 * 60 * 1000),
-    status: WorkoutPlanStatus.ACTIVE,
-    progress: {
-      completedWorkouts: 15,
-      totalWorkouts: 48,
-      completionRate: 31.25,
-      currentWeek: 4,
-      totalWeeks: 12,
-      averageRating: 4.2,
-      totalCaloriesBurned: 4500,
-      personalRecords: 8,
-      adherenceRate: 85,
-      lastWorkoutDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-      nextWorkoutDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
-    },
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-]
-
-const mockWorkoutStats: WorkoutStats = {
-  totalWorkouts: 45,
-  completedWorkouts: 38,
-  totalDuration: 2280, // 38 hours
-  totalCalories: 11400,
-  averageRating: 4.3,
-  currentStreak: 5,
-  longestStreak: 12,
-  personalRecords: 15,
-  favoriteExercises: [
-    { exerciseId: "1", exerciseName: "Supino Reto", count: 12 },
-    { exerciseId: "2", exerciseName: "Agachamento", count: 10 },
-  ],
-  weeklyProgress: [
-    { week: "2024-01", workouts: 4, duration: 240, calories: 1200 },
-    { week: "2024-02", workouts: 3, duration: 180, calories: 900 },
-  ],
-  muscleGroupDistribution: [
-    { muscleGroup: MuscleGroup.CHEST, percentage: 25 },
-    { muscleGroup: MuscleGroup.BACK, percentage: 20 },
-    { muscleGroup: MuscleGroup.QUADRICEPS, percentage: 18 },
-  ],
-}
-
 export function WorkoutProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(workoutReducer, {
-    ...initialState,
-    exercises: mockExercises,
-    workouts: mockWorkouts,
-    workoutPlans: mockWorkoutPlans,
-    workoutStats: mockWorkoutStats,
-  })
+  const [state, dispatch] = useReducer(workoutReducer, initialState)
 
   return <WorkoutContext.Provider value={{ state, dispatch }}>{children}</WorkoutContext.Provider>
 }

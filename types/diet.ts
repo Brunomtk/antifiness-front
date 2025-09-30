@@ -33,7 +33,23 @@ export interface ApiMeal {
   name: string
   type: MealType
   typeDescription: string
-  scheduledTime: string
+  scheduledTime: {
+    ticks: number
+    days: number
+    hours: number
+    milliseconds: number
+    microseconds: number
+    nanoseconds: number
+    minutes: number
+    seconds: number
+    totalDays: number
+    totalHours: number
+    totalMilliseconds: number
+    totalMicroseconds: number
+    totalNanoseconds: number
+    totalMinutes: number
+    totalSeconds: number
+  }
   instructions: string
   totalCalories: number
   totalProtein: number
@@ -176,7 +192,7 @@ export interface CreateDietRequest {
 export interface CreateMealRequest {
   name: string
   type: MealType
-  scheduledTime: string
+  scheduledTime: string | { ticks: number }
   instructions: string
   foods: CreateMealFoodRequest[]
 }

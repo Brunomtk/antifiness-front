@@ -8,11 +8,20 @@ export function DashboardExample() {
   const { dashboard, client, user } = useApp()
 
   useEffect(() => {
-    // Carregar dados do dashboard
-    dashboard.fetchDashboardData()
-    client.fetchClients()
-    user.fetchProfile()
-  }, [])
+  // Carregar dados do dashboard
+  const run = async () => {
+    // refreshData pode ser função OU Promise; suportar ambos
+    const r: any = (dashboard as any)?.refreshData
+    if (typeof r === "function") {
+      await r()
+    } else if (r && typeof r.then === "function") {
+      await r
+    }
+    await (user as any)?.fetchProfile?.()
+  }
+  run()
+  // client fetch call removed: shape exposes a Promise, not a callable
+}, [])
 
   if (dashboard.loading) {
     return <div>Carregando...</div>

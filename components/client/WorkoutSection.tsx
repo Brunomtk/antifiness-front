@@ -60,7 +60,7 @@ export default function WorkoutSection({ clientId }: Props) {
           workoutService.getById(Number(id)),
           workoutService.getProgress(Number(id)),
         ])
-        const items = full?.exercises ?? full?.workoutExercises ?? []
+        const items = (full as any)?.exercises ?? (full as any)?.workoutExercises ?? []
         setExercises(Array.isArray(items) ? items : [])
         setProgress(Array.isArray(prog) ? prog : [])
       } catch (e) {

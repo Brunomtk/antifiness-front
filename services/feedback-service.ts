@@ -50,8 +50,8 @@ class FeedbackService {
   }
 
   // Atualizar feedback
-  async updateFeedback(id: number, data: UpdateFeedbackData): Promise<Feedback> {
-    const response = await api.put(`/Feedback/${id}`, data)
+  async updateFeedback(id: number, data: Partial<UpdateFeedbackData>): Promise<Feedback> {
+    const response = await api.patch(`/Feedback/${id}`, data)
     return response.data
   }
 

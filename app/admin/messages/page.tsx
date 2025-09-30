@@ -1,6 +1,18 @@
 "use client"
 
+type UserListItem = {
+  id: number;
+  name: string;
+  email?: string;
+  avatar: string;
+  isOnline: boolean;
+  hasConversation: boolean;
+  conversation?: Conversation;
+};
+
+
 import { useState, useRef, useEffect, useCallback } from "react"
+import { type Conversation } from "@/types/message"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
@@ -158,14 +170,14 @@ export default function AdminMessages() {
     return [...usersWithConversations, ...usersWithoutConversations]
   }
 
-  const allUsers = getAllUsersForMessaging()
-  const filteredUsers = allUsers.filter(
+  const allUsers: UserListItem[] = getAllUsersForMessaging()
+  const filteredUsers: UserListItem[] = allUsers.filter(
     (user) =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()),
+      (user.name ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.email ?? '').toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  const displayList = showAllUsers
+  const displayList: UserListItem[] = showAllUsers
     ? filteredUsers
     : conversations
         .map((conv) => {
@@ -180,7 +192,7 @@ export default function AdminMessages() {
             conversation: conv,
           }
         })
-        .filter((user) => user.name.toLowerCase().includes(searchTerm.toLowerCase()))
+        .filter((user) => (user.name ?? '').toLowerCase().includes(searchTerm.toLowerCase()))
 
   const handleStartConversation = useCallback(
     async (clientId: number) => {
@@ -344,7 +356,7 @@ export default function AdminMessages() {
                     <div
                       key={user.id}
                       className={`flex items-center p-4 rounded-xl cursor-pointer transition-all duration-200 mb-2 ${
-                        currentConversation?.id === user.conversation?.id
+                        (user.conversation ? currentConversation?.id === user.conversation.id : (currentConversation?.participants?.some(p => p.userId === user.id) ?? false))
                           ? "bg-gradient-to-r from-[#df0e67]/10 to-pink-100 border border-[#df0e67]/20 shadow-sm"
                           : "hover:bg-white hover:shadow-sm"
                       }`}

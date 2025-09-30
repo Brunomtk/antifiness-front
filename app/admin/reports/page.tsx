@@ -32,20 +32,18 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import type { DateRange } from "react-day-picker"
 import { useStats } from "@/hooks/use-stats"
 import type { StatsFilters } from "@/types/stats"
 
 export default function AdminReports() {
-  const { stats, loading, error, refetch } = useStats()
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
-    from: new Date(2024, 0, 1),
-    to: new Date(),
-  })
+  const { stats, loading, error, fetchStats } = useStats()
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({ from: new Date(2024, 0, 1), to: new Date() })
   const [selectedPeriod, setSelectedPeriod] = useState("3months")
   const [filters, setFilters] = useState<StatsFilters>({})
 
   const handleRefresh = () => {
-    refetch(filters)
+    fetchStats(filters)
   }
 
   const handleExport = () => {
@@ -131,7 +129,7 @@ export default function AdminReports() {
                   mode="range"
                   defaultMonth={dateRange?.from}
                   selected={dateRange}
-                  onSelect={setDateRange}
+                  onSelect={(range) => setDateRange(range as DateRange | undefined)}
                   numberOfMonths={2}
                 />
               </PopoverContent>

@@ -154,8 +154,6 @@ export function useClientDashboard() {
       activityDates.add(date)
     })
 
-    const daysActive = activityDates.size
-
     return {
       currentWeight,
       goalWeight: targetWeight,
@@ -163,7 +161,7 @@ export function useClientDashboard() {
       weightLoss,
       progressPercentage,
       adherence,
-      daysActive,
+      daysActive: activityDates.size,
       totalDays: daysInMonth,
       weeklyProgress: calculateWeeklyProgress(measurements, diets, workouts),
     }
@@ -191,7 +189,7 @@ export function useClientDashboard() {
 
     try {
       const clientId = currentUser.clientId
-      if (!clientId) throw new Error('CLIENT_ID_MISSING')
+      if (!clientId) throw new Error("CLIENT_ID_MISSING")
       setIsLoading(true)
       setError(null)
       console.log("✅ ClientId confirmado:", clientId)
@@ -205,7 +203,7 @@ export function useClientDashboard() {
       console.log("📡 Fazendo requisição GET /Client/" + clientId)
       let client: ClientData | null = null
       try {
-      if (!clientId) throw new Error('CLIENT_ID_MISSING')
+        if (!clientId) throw new Error("CLIENT_ID_MISSING")
         const clientResponse = await api.get(`/Client/${clientId}`)
         client = clientResponse.data as ClientData
         setClientData(client)
@@ -229,10 +227,19 @@ export function useClientDashboard() {
           throw e
         }
       }
-      console.log("👤 Nome:", client.name)
-      console.log("📧 Email:", client.email)
-      console.log("⚖️ Peso atual:", client.currentWeight)
-      console.log("🎯 Peso meta:", client.targetWeight)
+
+      if (client) {
+        console.log("👤 Nome:", client.name)
+        console.log("📧 Email:", client.email)
+        console.log("⚖️ Peso atual:", client.currentWeight)
+        console.log("🎯 Peso meta:", client.targetWeight)
+      } else {
+        console.log("❌ Cliente é null - não foi possível carregar dados do cliente")
+        // Early return if client is null to prevent further errors
+        setError("Não foi possível carregar os dados do cliente")
+        setIsLoading(false)
+        return
+      }
 
       // Buscar dados relacionados
       console.log("📡 Buscando dietas para clientId:", clientId)
@@ -271,9 +278,14 @@ export function useClientDashboard() {
       console.log("💪 Treinos:", workouts.length)
       console.log("💬 Feedbacks:", feedbacks.length)
 
-      // Calcular estatísticas
-      const calculatedStats = calculateStats(client, diets, workouts)
-      setStats(calculatedStats)
+      if (client) {
+        // Calcular estatísticas
+        const calculatedStats = calculateStats(client, diets, workouts)
+        setStats(calculatedStats)
+      } else {
+        console.log("❌ Cliente é null - não é possível calcular estatísticas")
+        setStats(null)
+      }
 
       // Processar atividades recentes
       const activities: RecentActivity[] = []
@@ -375,8 +387,8 @@ export function useClientDashboard() {
       if (err.response?.status === 404) {
         // Já tratamos 404 do cliente com fallback; manter mensagem genérica
         errorMessage = `Dados não disponíveis no momento`
-      } else if (err.message === 'CLIENT_ID_MISSING') {
-        errorMessage = 'ID do cliente não encontrado. Faça login novamente.'
+      } else if (err.message === "CLIENT_ID_MISSING") {
+        errorMessage = "ID do cliente não encontrado. Faça login novamente."
       } else if (err.response?.status === 401) {
         errorMessage = "Sessão expirada. Faça login novamente"
       } else if (err.response?.status === 403) {

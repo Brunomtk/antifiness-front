@@ -16,7 +16,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowLeft, Save, Loader2, Calendar, ChefHat, User, Edit3, Clock, Plus, Trash2, Check } from "lucide-react"
 import { useDiets } from "@/hooks/use-diet"
 import FoodPickerModal from "@/components/food/FoodPickerModal"
-import { type ApiDiet, type DietStatus, MealType, getDietStatusLabel, type CreateMealFoodRequest } from "@/types/diet"
+import {
+  type ApiDiet,
+  type DietStatus,
+  MealType,
+  getDietStatusLabel,
+  type CreateMealFoodRequest,
+  type CreateMealRequest,
+  type ApiMeal,
+} from "@/types/diet"
 import { foodService } from "@/services/food-service"
 import { toast } from "sonner"
 import { mealService, type Meal } from "@/services/meal-service"
@@ -27,7 +35,7 @@ interface DietDetailsPageProps {
 
 export default function DietDetailsPage({ dietId }: DietDetailsPageProps) {
   const router = useRouter()
-  const foodNameFromId = (id?: number) => (id != null ? (foodIndex[id] || `ID ${id}`) : "—");
+  const foodNameFromId = (id?: number) => (id != null ? foodIndex[id] || `ID ${id}` : "—")
 
   const [activeSection, setActiveSection] = useState("overview")
   const [foodIndex, setFoodIndex] = useState<Record<number, string>>({})
@@ -48,12 +56,12 @@ export default function DietDetailsPage({ dietId }: DietDetailsPageProps) {
   const [isAddProgressOpen, setIsAddProgressOpen] = useState(false)
   const [selectedMealId, setSelectedMealId] = useState<number | null>(null)
 
-  const [newMeal, setNewMeal] = useState({
+  const [newMeal, setNewMeal] = useState<CreateMealRequest>({
     name: "",
     type: MealType.BREAKFAST,
     scheduledTime: "08:00:00",
     instructions: "",
-    foods: [],
+    foods: [] as CreateMealFoodRequest[],
   })
 
   const [newProgress, setNewProgress] = useState({
@@ -89,17 +97,20 @@ export default function DietDetailsPage({ dietId }: DietDetailsPageProps) {
     }
   }, [diet])
 
-  
   useEffect(() => {
-    (async () => {
+    ;(async () => {
       try {
-        const foods = await foodService.getFoods();
-        const idx: Record<number, string> = {};
-        foods.forEach(f => { idx[f.id] = f.name; });
-        setFoodIndex(idx);
-      } catch { /* noop */ }
-    })();
-  }, []);
+        const foods = await foodService.getFoods()
+        const idx: Record<number, string> = {}
+        foods.forEach((f) => {
+          idx[f.id] = f.name
+        })
+        setFoodIndex(idx)
+      } catch {
+        /* noop */
+      }
+    })()
+  }, [])
 
   const loadDietData = async () => {
     if (!dietId) return
@@ -116,43 +127,100 @@ export default function DietDetailsPage({ dietId }: DietDetailsPageProps) {
     }
   }
 
-  
   const openEditMeal = (meal: any) => {
+    console.log("[v0] Opening meal for edit - original meal:", meal)
+
+    // Convert API meal foods to the exact format expected by the food picker
+    const initialFoods: CreateMealFoodRequest[] = (meal.foods || []).map((f: any) => ({
+      foodId: f.foodId,
+      quantity: f.quantity,
+      unit: f.unit,
+    }))
+
+    console.log("[v0] Converted initial foods for editing:", initialFoods)
+
+    // Handle scheduledTime conversion properly
+    let timeString = "08:00:00"
+    if (meal.scheduledTime) {
+      if (typeof meal.scheduledTime === "object" && meal.scheduledTime.ticks) {
+        const totalSeconds = Math.floor(meal.scheduledTime.ticks / 10000000)
+        const hours = Math.floor(totalSeconds / 3600)
+        const minutes = Math.floor((totalSeconds % 3600) / 60)
+        const seconds = totalSeconds % 60
+        timeString = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
+      } else if (typeof meal.scheduledTime === "string") {
+        timeString = meal.scheduledTime
+      }
+    }
+
     setEditMeal({
       id: meal.id,
       name: meal.name || "",
-      type: meal.type ?? 0,
-      scheduledTime: meal.scheduledTime || "08:00:00",
+      type: meal.type !== undefined ? meal.type : 0,
+      scheduledTime: timeString,
       instructions: meal.instructions || "",
-      foods: (meal.foods || []).map((f: any) => ({
-        id: f.id,
-        mealId: meal.id,
-        foodId: f.foodId,
-        quantity: f.quantity,
-        unit: f.unit
-      }))
+      foods: initialFoods, // Start with exact foods from API
     })
+
+    console.log("[v0] Edit meal state initialized:", {
+      id: meal.id,
+      name: meal.name,
+      type: meal.type,
+      scheduledTime: timeString,
+      foodsCount: initialFoods.length,
+    })
+
     setIsEditMealOpen(true)
   }
 
   const handleUpdateMeal = async () => {
-    if (!diet || !editMeal) return
+    if (!diet || !editMeal) {
+      console.log("[v0] Cannot update meal - missing diet or editMeal")
+      return
+    }
+
     try {
-      await mealService.updateMeal(diet.id, editMeal.id, {
+      console.log("[v0] Starting meal update process")
+      console.log("[v0] Current editMeal state:", editMeal)
+      console.log("[v0] Foods to be sent to API:", editMeal.foods)
+
+      const foodsToSend: CreateMealFoodRequest[] = ((editMeal.foods || []) as CreateMealFoodRequest[])
+        .filter((food: CreateMealFoodRequest) => food.foodId && food.quantity > 0)
+        .map((food: CreateMealFoodRequest) => ({
+          foodId: food.foodId,
+          quantity: food.quantity,
+          unit: food.unit || "g",
+        }))
+
+      console.log("[v0] Clean foods array for API call:", foodsToSend)
+      console.log("[v0] Number of foods being sent:", foodsToSend.length)
+
+      const updatePayload = {
         name: editMeal.name,
         type: editMeal.type,
-        scheduledTime: editMeal.scheduledTime,
+        scheduledTime: editMeal.scheduledTime, // Will be converted to ticks in service
         instructions: editMeal.instructions,
-        foods: editMeal.foods
-      })
+        foods: foodsToSend, // This will completely replace existing foods
+      }
+
+      console.log("[v0] Final update payload:", updatePayload)
+
+      // Call the API with correct parameters
+      await mealService.updateMeal(diet.id, editMeal.id, updatePayload)
+
+      // Reload meals to show updated data
       await loadMeals()
       setIsEditMealOpen(false)
+
+      console.log("[v0] Meal update completed successfully")
+      toast.success("Refeição atualizada com sucesso!")
     } catch (error) {
-      console.error("Erro ao atualizar refeição:", error)
+      console.error("[v0] Error updating meal:", error)
       toast.error("Não foi possível atualizar a refeição.")
     }
   }
-const loadMeals = async () => {
+
+  const loadMeals = async () => {
     if (!diet) return
 
     try {
@@ -240,7 +308,8 @@ const loadMeals = async () => {
 
   const handleDeleteMeal = async (mealId: number) => {
     try {
-      await mealService.deleteMeal(diet.id, mealId)
+      const resolvedDietId = diet?.id ?? Number.parseInt(dietId, 10)
+      await mealService.deleteMeal(resolvedDietId, mealId)
       await loadMeals() // Reload meals after deletion
       toast.success("Refeição removida com sucesso!")
     } catch (error) {
@@ -291,16 +360,40 @@ const loadMeals = async () => {
     setIsFoodPickerOpen(false)
   }
 
-  const handleFoodSelectionEdit = (items: CreateMealFoodRequest[]) => {
-    if (!editMeal) return;
-    setEditMeal({ ...editMeal, foods: items });
-    setIsFoodPickerOpenEdit(false);
-  };
+  const handleFoodSelectionEdit = (selectedFoods: CreateMealFoodRequest[]) => {
+    if (!editMeal) {
+      console.log("[v0] Cannot handle food selection - no editMeal state")
+      return
+    }
 
+    console.log("[v0] Food selection received from modal:", selectedFoods)
+    console.log("[v0] Number of foods selected:", selectedFoods.length)
+
+    const cleanFoodsList: CreateMealFoodRequest[] = selectedFoods
+      .filter((food) => food.foodId && food.quantity > 0) // Only valid foods
+      .map((food) => ({
+        foodId: food.foodId,
+        quantity: food.quantity,
+        unit: food.unit || "g",
+      }))
+
+    console.log("[v0] Clean foods list after processing:", cleanFoodsList)
+
+    const updatedEditMeal = {
+      ...editMeal,
+      foods: cleanFoodsList, // Completely replace the foods array
+    }
+
+    console.log("[v0] Updated editMeal state:", updatedEditMeal)
+
+    setEditMeal(updatedEditMeal)
+    setIsFoodPickerOpenEdit(false)
+
+    console.log("[v0] Food selection handling completed")
+  }
 
   if (loading) {
     return (
-
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -312,7 +405,7 @@ const loadMeals = async () => {
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
+          {Array.from({ length: 4 }).map((_: unknown, i: number) => (
             <div key={i} className="h-32 bg-gray-200 animate-pulse rounded" />
           ))}
         </div>
@@ -353,7 +446,7 @@ const loadMeals = async () => {
             {/* Diet Info */}
             <div className="flex items-center gap-6">
               <Avatar className="h-20 w-20 ring-4 ring-white shadow-lg">
-                <AvatarImage src={diet.clientAvatar || "/placeholder.svg"} />
+                <AvatarImage src={"/placeholder.svg"} alt={diet.clientName} />
                 <AvatarFallback className="bg-gradient-to-br from-green-500 to-emerald-600 text-white text-xl font-bold">
                   <ChefHat className="h-8 w-8" />
                 </AvatarFallback>
@@ -511,13 +604,13 @@ const loadMeals = async () => {
 
             {mealsLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {Array.from({ length: 6 }).map((_, i) => (
+                {Array.from({ length: 6 }).map((_: unknown, i: number) => (
                   <div key={i} className="h-32 bg-gray-200 animate-pulse rounded" />
                 ))}
               </div>
             ) : meals.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {meals.map((meal) => {
+                {meals.map((meal: ApiMeal) => {
                   const mealTypeOptions = mealService.getMealTypeOptions()
                   const mealTypeInfo = mealTypeOptions.find((option) => option.value === meal.type)
 
@@ -545,7 +638,7 @@ const loadMeals = async () => {
                                 <Check className="h-4 w-4" />
                               </Button>
                             )}
-                                                        <Button
+                            <Button
                               size="sm"
                               variant="outline"
                               className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600 bg-transparent"
@@ -553,7 +646,7 @@ const loadMeals = async () => {
                             >
                               <Edit3 className="h-4 w-4" />
                             </Button>
-<Button
+                            <Button
                               size="sm"
                               variant="outline"
                               className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600 bg-transparent"
@@ -567,7 +660,16 @@ const loadMeals = async () => {
                       <CardContent className="space-y-3">
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <Clock className="h-4 w-4" />
-                          <span>{meal.scheduledTime}</span>
+                          <span>
+                            {typeof meal.scheduledTime === "object" && meal.scheduledTime.ticks
+                              ? (() => {
+                                  const totalSeconds = Math.floor(meal.scheduledTime.ticks / 10000000)
+                                  const hours = Math.floor(totalSeconds / 3600)
+                                  const minutes = Math.floor((totalSeconds % 3600) / 60)
+                                  return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`
+                                })()
+                              : (typeof meal.scheduledTime === "string" ? meal.scheduledTime : "08:00")}
+                          </span>
                           {meal.isCompleted && (
                             <Badge className="bg-green-100 text-green-800 text-xs ml-auto">Concluída</Badge>
                           )}
@@ -597,9 +699,9 @@ const loadMeals = async () => {
                               </Badge>
                             </div>
                             <div className="mt-2 space-y-1">
-                              {meal.foods.slice(0, 2).map((food, index) => (
+                              {meal.foods.slice(0, 2).map((food: CreateMealFoodRequest, index: number) => (
                                 <div key={index} className="text-xs text-gray-600 flex justify-between">
-                                  <span>{food.foodName || `Alimento ${food.foodId}`}</span>
+                                  <span>{foodNameFromId(food.foodId) || `Alimento ${food.foodId}`}</span>
                                   <span>
                                     {food.quantity}
                                     {food.unit}
@@ -643,13 +745,13 @@ const loadMeals = async () => {
 
             {progressLoading ? (
               <div className="space-y-4">
-                {Array.from({ length: 3 }).map((_, i) => (
+                {Array.from({ length: 3 }).map((_: unknown, i: number) => (
                   <div key={i} className="h-24 bg-gray-200 animate-pulse rounded" />
                 ))}
               </div>
             ) : progress.length > 0 ? (
               <div className="space-y-4">
-                {progress.map((entry) => (
+                {progress.map((entry: any) => (
                   <Card key={entry.id}>
                     <CardContent className="pt-6">
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -691,7 +793,6 @@ const loadMeals = async () => {
         </Tabs>
       </div>
 
-      
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
@@ -833,9 +934,12 @@ const loadMeals = async () => {
               </div>
 
               <div className="flex justify-end gap-3 pt-2">
-                <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>Cancelar</Button>
-                <Button type="button" onClick={handleSaveDiet}>
-                  <Save className="mr-2 h-4 w-4" /> Salvar
+                <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button type="button" onClick={handleSaveDiet} disabled={saving}>
+                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                  Salvar
                 </Button>
               </div>
             </div>
@@ -843,7 +947,8 @@ const loadMeals = async () => {
         </DialogContent>
       </Dialog>
 
-<Dialog open={isAddMealOpen} onOpenChange={setIsAddMealOpen}>
+      {/* Add Meal Dialog */}
+      <Dialog open={isAddMealOpen} onOpenChange={setIsAddMealOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Adicionar Refeição</DialogTitle>
@@ -872,7 +977,7 @@ const loadMeals = async () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {mealService.getMealTypeOptions().map((option) => (
+                    {mealService.getMealTypeOptions().map((option: any) => (
                       <SelectItem key={option.value} value={option.value.toString()}>
                         <div className="flex items-center gap-2">
                           <span>{option.icon}</span>
@@ -890,7 +995,7 @@ const loadMeals = async () => {
               <Input
                 id="scheduledTime"
                 type="time"
-                value={newMeal.scheduledTime}
+                value={typeof newMeal.scheduledTime === "string" ? newMeal.scheduledTime.slice(0, 5) : (newMeal.scheduledTime && (newMeal.scheduledTime as any).ticks    ? (() => {        const totalSeconds = Math.floor(((newMeal.scheduledTime as any).ticks) / 10000000);        const h = Math.floor(totalSeconds / 3600);        const m = Math.floor((totalSeconds % 3600) / 60);        return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;      })()    : "08:00")}
                 onChange={(e) => setNewMeal({ ...newMeal, scheduledTime: e.target.value + ":00" })}
               />
             </div>
@@ -917,7 +1022,7 @@ const loadMeals = async () => {
 
               {newMeal.foods && newMeal.foods.length > 0 ? (
                 <div className="space-y-2 max-h-40 overflow-y-auto border rounded-lg p-3 bg-gray-50">
-                  {newMeal.foods.map((food, index) => (
+                  {newMeal.foods.map((food: CreateMealFoodRequest, index: number) => (
                     <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
                       <div className="flex-1">
                         <span className="text-sm font-medium">Alimento: {foodNameFromId(food.foodId)}</span>
@@ -962,6 +1067,138 @@ const loadMeals = async () => {
         </DialogContent>
       </Dialog>
 
+      {/* Edit Meal Dialog */}
+      <Dialog open={isEditMealOpen} onOpenChange={setIsEditMealOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Editar Refeição</DialogTitle>
+            <DialogDescription>Altere as informações da refeição e salve para atualizar.</DialogDescription>
+          </DialogHeader>
+
+          {editMeal && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="editName">Nome</Label>
+                  <Input
+                    id="editName"
+                    value={editMeal.name}
+                    onChange={(e) => setEditMeal({ ...editMeal, name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editType">Tipo</Label>
+                  <Select
+                    value={String(editMeal.type)}
+                    onValueChange={(v) => {
+                      console.log("[v0] Changing meal type from", editMeal.type, "to", Number(v))
+                      setEditMeal({ ...editMeal, type: Number(v) })
+                    }}
+                  >
+                    <SelectTrigger id="editType">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {mealService.getMealTypeOptions().map((opt: any) => (
+                        <SelectItem key={opt.value} value={String(opt.value)}>
+                          <div className="flex items-center gap-2">
+                            <span>{opt.icon}</span>
+                            <span>{opt.label}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editTime">Horário</Label>
+                  <Input
+                    id="editTime"
+                    type="time"
+                    value={(editMeal.scheduledTime || "").slice(0, 5)}
+                    onChange={(e) =>
+                      setEditMeal({
+                        ...editMeal,
+                        scheduledTime: e.target.value + (e.target.value.length === 5 ? ":00" : ""),
+                      })
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editInstructions">Instruções</Label>
+                <Textarea
+                  id="editInstructions"
+                  rows={3}
+                  value={editMeal.instructions}
+                  onChange={(e) => setEditMeal({ ...editMeal, instructions: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Alimentos</Label>
+                  <Button type="button" variant="outline" size="sm" onClick={() => setIsFoodPickerOpenEdit(true)}>
+                    <Plus className="h-4 w-4 mr-2" /> Selecionar Alimentos
+                  </Button>
+                </div>
+
+                {(!editMeal.foods || editMeal.foods.length === 0) && (
+                  <p className="text-sm text-muted-foreground">Nenhum alimento adicionado.</p>
+                )}
+
+                {editMeal.foods && editMeal.foods.length > 0 ? (
+                  <div className="space-y-2 max-h-40 overflow-y-auto border rounded-lg p-3 bg-gray-50">
+                    {editMeal.foods.map((food: CreateMealFoodRequest, index: number) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
+                        <div className="flex-1">
+                          <span className="text-sm font-medium">Alimento: {foodNameFromId(food.foodId)}</span>
+                          <div className="text-xs text-gray-500">
+                            {food.quantity} {food.unit}
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
+                          onClick={() => {
+                            const copy = [...editMeal.foods]
+                            copy.splice(index, 1)
+                            setEditMeal({ ...editMeal, foods: copy })
+                          }}
+                          aria-label="Remover alimento"
+                          title="Remover"
+                        >
+                          🗑️
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-lg">
+                    <div className="text-4xl mb-2">🍽️</div>
+                    <p className="text-sm text-gray-500">Nenhum alimento adicionado</p>
+                    <p className="text-xs text-gray-400">Clique em "Selecionar Alimentos" para começar</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <Button variant="outline" onClick={() => setIsEditMealOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleUpdateMeal}>
+                  <Save className="mr-2 h-4 w-4" /> Salvar alterações
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Food Picker Modals */}
       <Dialog open={isFoodPickerOpen} onOpenChange={setIsFoodPickerOpen}>
         <FoodPickerModal
           open={isFoodPickerOpen}
@@ -976,10 +1213,11 @@ const loadMeals = async () => {
           open={isFoodPickerOpenEdit}
           onOpenChange={setIsFoodPickerOpenEdit}
           onConfirm={handleFoodSelectionEdit}
-          initial={(editMeal?.foods as any) || []}
+          initial={editMeal?.foods || []}
         />
       </Dialog>
 
+      {/* Add Progress Dialog */}
       <Dialog open={isAddProgressOpen} onOpenChange={setIsAddProgressOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -1104,126 +1342,6 @@ const loadMeals = async () => {
           </div>
         </DialogContent>
       </Dialog>
-<Dialog open={isEditMealOpen} onOpenChange={setIsEditMealOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Editar Refeição</DialogTitle>
-            <DialogDescription>Altere as informações da refeição e salve para atualizar.</DialogDescription>
-          </DialogHeader>
-
-          {editMeal && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="editName">Nome</Label>
-                  <Input id="editName" value={editMeal.name} onChange={(e) => setEditMeal({ ...editMeal, name: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="editType">Tipo</Label>
-                  <Select
-                    value={String(editMeal.type)}
-                    onValueChange={(v) => setEditMeal({ ...editMeal, type: Number(v) })}
-                  >
-                    <SelectTrigger id="editType">
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mealService.getMealTypeOptions().map((opt) => (
-                        <SelectItem key={opt.value} value={String(opt.value)}>{opt.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="editTime">Horário</Label>
-                  <Input
-                    id="editTime"
-                    type="time"
-                    value={(editMeal.scheduledTime || "").slice(0,5)}
-                    onChange={(e) => setEditMeal({ ...editMeal, scheduledTime: e.target.value + (e.target.value.length===5 ? ':00' : '') })}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="editInstructions">Instruções</Label>
-                <Textarea
-                  id="editInstructions"
-                  rows={3}
-                  value={editMeal.instructions}
-                  onChange={(e) => setEditMeal({ ...editMeal, instructions: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Alimentos</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsFoodPickerOpenEdit(true)}
-                  ><Plus className="h-4 w-4 mr-2" /> Selecionar Alimentos
-                  </Button>
-                </div>
-
-                {(!editMeal.foods || editMeal.foods.length === 0) && (
-                  <p className="text-sm text-muted-foreground">Nenhum alimento adicionado.</p>
-                )}
-
-                {editMeal.foods && editMeal.foods.length > 0 ? (
-                  <div className="space-y-2 max-h-40 overflow-y-auto border rounded-lg p-3 bg-gray-50">
-                    {editMeal.foods.map((food, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
-                        <div className="flex-1">
-                          <span className="text-sm font-medium">Alimento: {foodNameFromId(food.foodId)}</span>
-                          <div className="text-xs text-gray-500">
-                            {food.quantity} {food.unit}
-                          </div>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
-                          onClick={() => {
-                            const copy = [...editMeal.foods];
-                            copy.splice(index, 1);
-                            setEditMeal({ ...editMeal, foods: copy });
-                          }}
-                          aria-label="Remover alimento"
-                          title="Remover"
-                        >
-                          🗑️
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-lg">
-                    <div className="text-4xl mb-2">🍽️</div>
-                    <p className="text-sm text-gray-500">Nenhum alimento adicionado</p>
-                    <p className="text-xs text-gray-400">Clique em "Selecionar Alimentos" para começar</p>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-end gap-3 pt-2">
-                <Button variant="outline" onClick={() => setIsEditMealOpen(false)}>Cancelar</Button>
-                <Button onClick={handleUpdateMeal}>
-                  <Save className="mr-2 h-4 w-4" /> Salvar alterações
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
-      
-  
-  
-
   )
-
-
 }

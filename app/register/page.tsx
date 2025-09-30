@@ -51,10 +51,10 @@ export default function RegisterPage() {
     try {
       await register({
         name: formData.name,
+          username: (formData as any).username ?? (formData.email?.split("@")[0] ?? ""),
         email: formData.email,
         password: formData.password,
-        phone: formData.phone,
-        role: "admin", // Por padrão, cadastros são de nutricionistas (admin)
+        phone: formData.phone,// Por padrão, cadastros são de nutricionistas (admin)
       })
 
       // Se chegou aqui, o cadastro foi bem-sucedido

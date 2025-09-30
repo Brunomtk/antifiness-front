@@ -2,7 +2,33 @@
 
 import { useCallback } from "react"
 
+import {
+  type Feedback,
+  type CreateFeedbackRequest,
+  type UpdateFeedbackData,
+  type FeedbackFilters,
+  FeedbackStatus,
+} from "@/types/feedback"
 import { useFeedback as useFeedbackContext } from "@/contexts/feedback-context"
+
+interface FeedbackResponse {
+  id: number
+  feedbackId: number
+  responderId: number
+  message: string
+  createdDate: string
+  updatedDate: string
+}
+
+interface FeedbackTemplate {
+  id: number
+  title: string
+  content: string
+  category: string
+  usageCount: number
+  createdAt: string
+  updatedAt: string
+}
 
 export function useFeedback() {
   return useFeedbackContext()
@@ -22,19 +48,19 @@ export function useFeedbacks() {
         let filteredFeedbacks = state.feedbacks
 
         if (filters) {
-          if (filters.type?.length) {
-            filteredFeedbacks = filteredFeedbacks.filter((f) => filters.type!.includes(f.type))
+          if (filters.type !== undefined) {
+            filteredFeedbacks = filteredFeedbacks.filter((f) => f.type === filters.type)
           }
-          if (filters.status?.length) {
-            filteredFeedbacks = filteredFeedbacks.filter((f) => filters.status!.includes(f.status))
+          if (filters.status !== undefined) {
+            filteredFeedbacks = filteredFeedbacks.filter((f) => f.status === filters.status)
           }
-          if (filters.priority?.length) {
-            filteredFeedbacks = filteredFeedbacks.filter((f) => filters.priority!.includes(f.priority))
+          if (filters.category !== undefined) {
+            filteredFeedbacks = filteredFeedbacks.filter((f) => f.category === filters.category)
           }
           if (filters.search) {
             const search = filters.search.toLowerCase()
             filteredFeedbacks = filteredFeedbacks.filter(
-              (f) => f.subject.toLowerCase().includes(search) || f.message.toLowerCase().includes(search),
+              (f) => f.title.toLowerCase().includes(search) || f.description.toLowerCase().includes(search),
             )
           }
         }
@@ -50,22 +76,33 @@ export function useFeedbacks() {
   )
 
   const createFeedback = useCallback(
-    async (data: CreateFeedbackData) => {
+    async (data: CreateFeedbackRequest) => {
       dispatch({ type: "SET_LOADING", payload: { key: "creating", value: true } })
 
       try {
         await delay(1000)
 
         const newFeedback: Feedback = {
-          id: Date.now().toString(),
-          ...data,
-          nutritionistId: "nutri1",
-          status: FeedbackStatus.OPEN,
-          priority: FeedbackPriority.NORMAL,
-          source: "app" as any,
-          tags: data.tags || [],
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          id: Date.now(),
+          clientId: 1,
+          clientName: "Cliente Teste",
+          trainerId: 1,
+          trainerName: "Trainer Teste",
+          type: data.type,
+          typeName: "Tipo Teste",
+          category: data.category,
+          categoryName: "Categoria Teste",
+          title: data.title,
+          description: data.description,
+          rating: data.rating,
+          status: FeedbackStatus.PENDING,
+          statusName: "Pendente",
+          adminResponse: null,
+          responseDate: null,
+          attachmentUrl: data.attachmentUrl || null,
+          isAnonymous: data.isAnonymous,
+          createdDate: new Date().toISOString(),
+          updatedDate: new Date().toISOString(),
         }
 
         dispatch({ type: "ADD_FEEDBACK", payload: newFeedback })
@@ -81,7 +118,7 @@ export function useFeedbacks() {
   )
 
   const updateFeedback = useCallback(
-    async (id: string, data: UpdateFeedbackData) => {
+    async (id: number, data: UpdateFeedbackData) => {
       dispatch({ type: "SET_LOADING", payload: { key: "updating", value: true } })
 
       try {
@@ -93,8 +130,8 @@ export function useFeedbacks() {
         const updatedFeedback: Feedback = {
           ...existingFeedback,
           ...data,
-          updatedAt: new Date(),
-          resolvedAt: data.status === FeedbackStatus.RESOLVED ? new Date() : existingFeedback.resolvedAt,
+          updatedDate: new Date().toISOString(),
+          responseDate: data.adminResponse ? new Date().toISOString() : existingFeedback.responseDate,
         }
 
         dispatch({ type: "UPDATE_FEEDBACK", payload: updatedFeedback })
@@ -110,7 +147,7 @@ export function useFeedbacks() {
   )
 
   const deleteFeedback = useCallback(
-    async (id: string) => {
+    async (id: number) => {
       dispatch({ type: "SET_LOADING", payload: { key: "deleting", value: true } })
 
       try {
@@ -118,7 +155,6 @@ export function useFeedbacks() {
         dispatch({ type: "DELETE_FEEDBACK", payload: id })
       } catch (error) {
         dispatch({ type: "SET_ERROR", payload: "Erro ao deletar feedback" })
-        throw error
       } finally {
         dispatch({ type: "SET_LOADING", payload: { key: "deleting", value: false } })
       }
@@ -159,18 +195,19 @@ export function useFeedbackResponses() {
   const { state, dispatch } = useFeedback()
 
   const createResponse = useCallback(
-    async (data: CreateResponseData) => {
+    async (data: { feedbackId: number; message: string }) => {
       dispatch({ type: "SET_LOADING", payload: { key: "responding", value: true } })
 
       try {
         await delay(800)
 
         const newResponse: FeedbackResponse = {
-          id: Date.now().toString(),
-          ...data,
-          responderId: "nutri1",
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          id: Date.now(),
+          feedbackId: data.feedbackId,
+          responderId: 1,
+          message: data.message,
+          createdDate: new Date().toISOString(),
+          updatedDate: new Date().toISOString(),
         }
 
         dispatch({ type: "ADD_RESPONSE", payload: newResponse })
@@ -181,8 +218,8 @@ export function useFeedbackResponses() {
           const updatedFeedback: Feedback = {
             ...feedback,
             status: FeedbackStatus.RESOLVED,
-            updatedAt: new Date(),
-            resolvedAt: new Date(),
+            updatedDate: new Date().toISOString(),
+            responseDate: new Date().toISOString(),
           }
           dispatch({ type: "UPDATE_FEEDBACK", payload: updatedFeedback })
         }
@@ -229,10 +266,10 @@ export function useFeedbackTemplates() {
 
         const newTemplate: FeedbackTemplate = {
           ...data,
-          id: Date.now().toString(),
+          id: Date.now(),
           usageCount: 0,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         }
 
         dispatch({ type: "ADD_TEMPLATE", payload: newTemplate })
@@ -282,76 +319,3 @@ export function useFeedbackStats() {
 }
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-
-type Feedback = {
-  id: string
-  subject: string
-  message: string
-  type: string
-  status: string
-  priority: string
-  nutritionistId: string
-  source: string
-  tags: string[]
-  createdAt: Date
-  updatedAt: Date
-  resolvedAt?: Date
-}
-
-type FeedbackResponse = {
-  id: string
-  feedbackId: string
-  responderId: string
-  message: string
-  createdAt: Date
-  updatedAt: Date
-}
-
-type FeedbackTemplate = {
-  id: string
-  name: string
-  content: string
-  usageCount: number
-  createdAt: Date
-  updatedAt: Date
-}
-
-type CreateFeedbackData = {
-  subject: string
-  message: string
-  type: string
-  priority: string
-  tags?: string[]
-}
-
-type UpdateFeedbackData = {
-  subject?: string
-  message?: string
-  type?: string
-  priority?: string
-  status?: string
-  tags?: string[]
-}
-
-type CreateResponseData = {
-  feedbackId: string
-  message: string
-}
-
-type FeedbackFilters = {
-  type?: string[]
-  status?: string[]
-  priority?: string[]
-  search?: string
-}
-
-enum FeedbackStatus {
-  OPEN = "open",
-  RESOLVED = "resolved",
-}
-
-enum FeedbackPriority {
-  LOW = "low",
-  NORMAL = "normal",
-  HIGH = "high",
-}

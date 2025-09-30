@@ -1,5 +1,17 @@
 "use client"
 
+// Helper to normalize API TimeSpan/string into "HH:mm"
+function formatTimeSpanToHHmm(value: any): string {
+  if (typeof value === "string") return value.slice(0, 5);
+  if (value && typeof value === "object" && "ticks" in value) {
+    const totalSeconds = Math.floor((value.ticks as number) / 10_000_000);
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
+  }
+  return "08:00";
+}
+
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -385,7 +397,7 @@ export default function ClientDiet() {
                                 {meal.scheduledTime && (
                                   <Badge variant="secondary" className="text-xs px-2 py-0 flex items-center gap-1">
                                     <Clock className="h-3 w-3" />
-                                    {meal?.scheduledTime}
+                                    {formatTimeSpanToHHmm(meal?.scheduledTime)}
                                   </Badge>
                                 )}
                               </div>

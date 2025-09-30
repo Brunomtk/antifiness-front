@@ -3,17 +3,14 @@
 import { useState, useEffect, useCallback } from "react"
 import { notificationService } from "@/services/notification-service"
 import { useUser } from "@/hooks/use-user"
-import type {
-  Notification,
+import type {Notification,
   NotificationStats,
-  NotificationFilters,
-  NotificationType,
-  NotificationCategory,
-  NotificationPriority,
-} from "@/types/notification"
-
-export function useClientNotifications() {
-  const { user } = useUser()
+  NotificationFilters} from "@/types/notification";
+import { NotificationCategory } from "@/types/notification";
+import { NotificationType } from "@/types/notification";
+import { NotificationPriority } from "@/types/notification";export function useClientNotifications() {
+  const __u: any = useUser();
+  const currentUser = __u?.currentUser ?? __u?.user ?? __u?.state?.user ?? null;
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [stats, setStats] = useState<NotificationStats | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -25,7 +22,7 @@ export function useClientNotifications() {
 
   const loadNotifications = useCallback(
     async (customFilters?: NotificationFilters) => {
-      if (!user?.id) return
+      if (!currentUser?.id) return
 
       setIsLoading(true)
       setError(null)
@@ -34,30 +31,30 @@ export function useClientNotifications() {
         const filterParams = {
           ...filters,
           ...customFilters,
-          userId: user.id,
+          userId: currentUser.id,
         }
 
         const data = await notificationService.getNotifications(filterParams)
-        setNotifications(data)
+        setNotifications(data.notifications)
       } catch (err) {
         setError(err instanceof Error ? err.message : "Erro ao carregar notificações")
       } finally {
         setIsLoading(false)
       }
     },
-    [user?.id, filters],
+    [currentUser?.id, filters],
   )
 
   const loadStats = useCallback(async () => {
-    if (!user?.id) return
+    if (!currentUser?.id) return
 
     try {
-      const data = await notificationService.getStats(user.id)
+      const data = await notificationService.getStats(currentUser.id)
       setStats(data)
     } catch (err) {
       console.error("Erro ao carregar estatísticas:", err)
     }
-  }, [user?.id])
+  }, [currentUser?.id])
 
   const markAsRead = useCallback(
     async (id: number) => {
@@ -86,13 +83,13 @@ export function useClientNotifications() {
   )
 
   const markAllAsRead = useCallback(async () => {
-    if (!user?.id) return
+    if (!currentUser?.id) return
 
     setIsMarkingAllAsRead(true)
     setError(null)
 
     try {
-      await notificationService.markAllAsRead(user.id)
+      await notificationService.markAllAsRead(currentUser.id)
 
       // Atualizar localmente
       setNotifications((prev) =>
@@ -110,7 +107,7 @@ export function useClientNotifications() {
     } finally {
       setIsMarkingAllAsRead(false)
     }
-  }, [user?.id, loadStats])
+  }, [currentUser?.id, loadStats])
 
   const deleteNotification = useCallback(
     async (id: number) => {
@@ -177,15 +174,15 @@ export function useClientNotifications() {
     })
     .slice(0, 5)
 
-  const urgentNotifications = notifications.filter((n) => n.priority === "URGENT" && !n.read)
+  const urgentNotifications = notifications.filter((n) => n.priority === NotificationPriority.URGENT && !n.read)
 
   // Load data on mount and when user changes
   useEffect(() => {
-    if (user?.id) {
+    if (currentUser?.id) {
       loadNotifications()
       loadStats()
     }
-  }, [user?.id, loadNotifications, loadStats])
+  }, [currentUser?.id, loadNotifications, loadStats])
 
   return {
     // Data
@@ -222,21 +219,21 @@ export function useClientNotifications() {
 // Helper functions
 export function getNotificationTypeLabel(type: NotificationType): string {
   switch (type) {
-    case "SYSTEM":
+    case NotificationType.SYSTEM:
       return "Sistema"
-    case "DIET":
+    case NotificationType.DIET:
       return "Dieta"
-    case "WORKOUT":
+    case NotificationType.WORKOUT:
       return "Treino"
-    case "PLAN":
+    case NotificationType.PLAN:
       return "Plano"
-    case "MESSAGE":
+    case NotificationType.MESSAGE:
       return "Mensagem"
-    case "REMINDER":
+    case NotificationType.REMINDER:
       return "Lembrete"
-    case "ACHIEVEMENT":
+    case NotificationType.ACHIEVEMENT:
       return "Conquista"
-    case "ALERT":
+    case NotificationType.ALERT:
       return "Alerta"
     default:
       return "Desconhecido"
@@ -245,15 +242,15 @@ export function getNotificationTypeLabel(type: NotificationType): string {
 
 export function getNotificationCategoryLabel(category: NotificationCategory): string {
   switch (category) {
-    case "INFO":
+    case NotificationCategory.INFO:
       return "Informação"
-    case "SUCCESS":
+    case NotificationCategory.SUCCESS:
       return "Sucesso"
-    case "WARNING":
+    case NotificationCategory.WARNING:
       return "Aviso"
-    case "ERROR":
+    case NotificationCategory.ERROR:
       return "Erro"
-    case "REMINDER":
+    case NotificationCategory.REMINDER:
       return "Lembrete"
     default:
       return "Desconhecido"
@@ -262,13 +259,13 @@ export function getNotificationCategoryLabel(category: NotificationCategory): st
 
 export function getNotificationPriorityLabel(priority: NotificationPriority): string {
   switch (priority) {
-    case "LOW":
+    case NotificationPriority.LOW:
       return "Baixa"
-    case "NORMAL":
+    case NotificationPriority.NORMAL:
       return "Normal"
-    case "HIGH":
+    case NotificationPriority.HIGH:
       return "Alta"
-    case "URGENT":
+    case NotificationPriority.URGENT:
       return "Urgente"
     default:
       return "Desconhecido"

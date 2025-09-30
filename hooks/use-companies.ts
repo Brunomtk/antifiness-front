@@ -11,7 +11,7 @@ export function useCompanies() {
     try {
       setLoading(true)
       const data = await companyService.getCompanies()
-      setCompanies(data)
+      setCompanies(data.result)
     } catch (error) {
       console.error("Erro ao carregar empresas:", error)
     } finally {

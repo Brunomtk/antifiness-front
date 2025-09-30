@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useUser } from "@/hooks/use-user"
 import { UserService } from "@/services/user-service"
 import type { User, UpdateUserData } from "@/types/user"
+import { getUserStatusLabel } from "@/types/user"
 
 export function useClientProfile() {
   const { currentUser } = useUser()
@@ -54,7 +55,17 @@ export function useClientProfile() {
       await UserService.updateUser(currentUser.id, updateData)
 
       // Atualizar estado local
-      setProfile((prev) => (prev ? { ...prev, ...data } : null))
+      setProfile((prev) => {
+        if (!prev) return null;
+        const { status: incomingStatus, ...rest } = data;
+        const normalized: Partial<User> = {
+          ...(rest as Omit<UpdateUserData, "status">),
+          ...(typeof incomingStatus === "number"
+            ? { status: getUserStatusLabel(incomingStatus), statusEnum: incomingStatus }
+            : {}),
+        };
+        return { ...prev, ...normalized } as User;
+      })
 
       return { success: true, message: "Perfil atualizado com sucesso!" }
     } catch (err) {

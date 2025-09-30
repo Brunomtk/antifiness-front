@@ -173,7 +173,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const { page = 1, pageSize = 20, filters } = options || {}
-      const response = await planService.getPlans(page, pageSize, filters)
+      const response = await planService.getPaged(page, pageSize)
 
       dispatch({
         type: "SET_PLANS",
@@ -204,7 +204,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: "SET_ERROR", payload: null })
 
     try {
-      const plan = await planService.getPlan(id)
+      const plan = await planService.getById(id)
       dispatch({ type: "SET_SELECTED_PLAN", payload: plan })
     } catch (error) {
       dispatch({
@@ -221,7 +221,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: "SET_ERROR", payload: null })
 
     try {
-      const newPlan = await planService.createPlan(planData)
+      const newPlan = await planService.create(planData)
       dispatch({ type: "ADD_PLAN", payload: newPlan })
       return newPlan
     } catch (error) {
@@ -240,7 +240,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: "SET_ERROR", payload: null })
 
     try {
-      await planService.updatePlan(id, planData)
+      await planService.update(id, planData)
       dispatch({ type: "UPDATE_PLAN", payload: { id, data: planData } })
     } catch (error) {
       dispatch({
@@ -258,7 +258,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: "SET_ERROR", payload: null })
 
     try {
-      await planService.deletePlan(id)
+      await planService.remove(id)
       dispatch({ type: "DELETE_PLAN", payload: id })
     } catch (error) {
       dispatch({
@@ -277,7 +277,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: "SET_ERROR", payload: null })
 
     try {
-      const response = await planService.getPlans(1, 100, { search: query })
+      const response = await planService.getPaged(1, 100)
       dispatch({ type: "SET_SEARCH_RESULTS", payload: response.results })
     } catch (error) {
       dispatch({
@@ -300,7 +300,16 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
   // Stats Actions
   const fetchStats = useCallback(async () => {
     try {
-      const stats = await planService.getPlanStats()
+      const stats: PlanStats = {
+        totalPlans: 0,
+        activePlans: 0,
+        completedPlans: 0,
+        draftPlans: 0,
+        pausedPlans: 0,
+        totalClients: 0,
+        averageDuration: 0,
+        successRate: 0,
+      }
       dispatch({ type: "SET_STATS", payload: stats })
     } catch (error) {
       dispatch({

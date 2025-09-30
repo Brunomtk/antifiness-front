@@ -105,3 +105,37 @@ export const planStatusLabel = (s: number) => {
   }
   return map[s] ?? `Status ${s}`
 }
+
+export type CreatePlanData = CreatePlanRequest
+
+export type UpdatePlanData = UpdatePlanRequest
+
+export type PlanFilters = {
+  search?: string
+  type?: number
+  status?: number
+  clientId?: number
+  nutritionistId?: number
+  startDate?: string
+  endDate?: string
+}
+
+export type PlanStats = {
+  totalPlans: number
+  activePlans: number
+  completedPlans: number
+  draftPlans: number
+  pausedPlans: number
+  totalClients: number
+  averageDuration: number
+  successRate: number
+}
+
+export type PlanPagination = {
+  currentPage: number
+  pageCount: number
+  pageSize: number
+  rowCount: number
+  firstRowOnPage: number
+  lastRowOnPage: number
+}

@@ -9,6 +9,8 @@ interface FeedbackState {
   feedbacks: Feedback[]
   selectedFeedback: Feedback | null
   stats: FeedbackStats | null
+  responses: any[]
+  templates: any[]
   filters: FeedbackFilters
   pagination: {
     totalCount: number
@@ -24,6 +26,8 @@ interface FeedbackState {
     creating: boolean
     updating: boolean
     deleting: boolean
+    responding: boolean
+    templates: boolean
   }
   error: string | null
 }
@@ -33,6 +37,9 @@ type FeedbackAction =
   | { type: "SET_FEEDBACKS"; payload: Feedback[] }
   | { type: "SET_SELECTED_FEEDBACK"; payload: Feedback | null }
   | { type: "SET_STATS"; payload: FeedbackStats }
+  | { type: "ADD_RESPONSE"; payload: any }
+  | { type: "SET_TEMPLATES"; payload: any[] }
+  | { type: "ADD_TEMPLATE"; payload: any }
   | { type: "SET_FILTERS"; payload: FeedbackFilters }
   | { type: "SET_PAGINATION"; payload: FeedbackState["pagination"] }
   | { type: "SET_ERROR"; payload: string | null }
@@ -46,17 +53,22 @@ interface FeedbackContextType {
   fetchFeedbacks: (filters?: FeedbackFilters) => Promise<void>
   fetchFeedbackById: (id: number) => Promise<void>
   createFeedback: (data: CreateFeedbackData) => Promise<void>
-  updateFeedback: (id: number, data: UpdateFeedbackData) => Promise<void>
+  updateFeedback: (id: number, data: Partial<UpdateFeedbackData>) => Promise<void>
   deleteFeedback: (id: number) => Promise<void>
   fetchFeedbackStats: () => Promise<void>
   setFilters: (filters: FeedbackFilters) => void
   clearError: () => void
+  addResponse: (response: any) => void
+  setTemplates: (templates: any[]) => void
+  addTemplate: (template: any) => void
 }
 
 const initialState: FeedbackState = {
   feedbacks: [],
   selectedFeedback: null,
   stats: null,
+  responses: [],
+  templates: [],
   filters: {
     pageNumber: 1,
     pageSize: 10,
@@ -75,6 +87,8 @@ const initialState: FeedbackState = {
     creating: false,
     updating: false,
     deleting: false,
+    responding: false,
+    templates: false,
   },
   error: null,
 }
@@ -106,6 +120,23 @@ function feedbackReducer(state: FeedbackState, action: FeedbackAction): Feedback
         stats: action.payload,
         loading: { ...state.loading, stats: false },
       }
+    case "ADD_RESPONSE":
+      return {
+        ...state,
+        responses: [...state.responses, action.payload],
+        loading: { ...state.loading, responding: false },
+      }
+    case "SET_TEMPLATES":
+      return {
+        ...state,
+        templates: action.payload,
+        loading: { ...state.loading, templates: false },
+      }
+    case "ADD_TEMPLATE":
+      return {
+        ...state,
+        templates: [...state.templates, action.payload],
+      }
     case "SET_FILTERS":
       return {
         ...state,
@@ -126,6 +157,8 @@ function feedbackReducer(state: FeedbackState, action: FeedbackAction): Feedback
           creating: false,
           updating: false,
           deleting: false,
+          responding: false,
+          templates: false,
         },
       }
     case "ADD_FEEDBACK":
@@ -211,7 +244,7 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const updateFeedback = useCallback(async (id: number, data: UpdateFeedbackData) => {
+  const updateFeedback = useCallback(async (id: number, data: Partial<UpdateFeedbackData>) => {
     dispatch({ type: "SET_LOADING", payload: { key: "updating", value: true } })
     dispatch({ type: "SET_ERROR", payload: null })
 
@@ -260,6 +293,18 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: "SET_ERROR", payload: null })
   }, [])
 
+  const addResponse = useCallback((response: any) => {
+    dispatch({ type: "ADD_RESPONSE", payload: response })
+  }, [])
+
+  const setTemplates = useCallback((templates: any[]) => {
+    dispatch({ type: "SET_TEMPLATES", payload: templates })
+  }, [])
+
+  const addTemplate = useCallback((template: any) => {
+    dispatch({ type: "ADD_TEMPLATE", payload: template })
+  }, [])
+
   const value: FeedbackContextType = {
     state,
     dispatch,
@@ -271,6 +316,9 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
     fetchFeedbackStats,
     setFilters,
     clearError,
+    addResponse,
+    setTemplates,
+    addTemplate,
   }
 
   return <FeedbackContext.Provider value={value}>{children}</FeedbackContext.Provider>

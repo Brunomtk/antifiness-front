@@ -11,6 +11,49 @@ import {
 import type { ApiDiet, ApiMeal, ApiDietProgress, ApiDietStats } from "@/types/diet"
 import { toast } from "sonner"
 
+// Normalize "HH:mm:ss" | "HH:mm" | { ticks } into full Api TimeSpan shape
+function toApiTimeSpan(value: any) {
+  let ticks: number = 0
+  if (typeof value === "string") {
+    // reuse util through dynamic require to avoid circulars?
+    try {
+      // Inline conversion to avoid import cycles
+      const parts = value.split(":").map((x) => Number.parseInt(x, 10) || 0)
+      const h = parts[0] ?? 0
+      const m = parts[1] ?? 0
+      const s = parts[2] ?? 0
+      const totalSeconds = h * 3600 + m * 60 + s
+      ticks = totalSeconds * 10_000_000
+    } catch {
+      ticks = 0
+    }
+  } else if (value && typeof value === "object" && typeof value.ticks === "number") {
+    ticks = value.ticks
+  }
+  const totalSeconds = Math.floor(ticks / 10_000_000)
+  const days = Math.floor(totalSeconds / 86400)
+  const hours = Math.floor((totalSeconds % 86400) / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  return {
+    ticks,
+    days,
+    hours,
+    milliseconds: 0,
+    microseconds: 0,
+    nanoseconds: 0,
+    minutes,
+    seconds,
+    totalDays: totalSeconds / 86400,
+    totalHours: totalSeconds / 3600,
+    totalMilliseconds: totalSeconds * 1000,
+    totalMicroseconds: totalSeconds * 1_000_000,
+    totalNanoseconds: totalSeconds * 1_000_000_000,
+    totalMinutes: totalSeconds / 60,
+    totalSeconds: totalSeconds,
+  }
+}
+
 export function useDiets() {
   const [diets, setDiets] = useState<ApiDiet[]>([])
   const [loading, setLoading] = useState(false)
@@ -226,13 +269,26 @@ export function useDietMeals() {
     }
   }, [])
 
-  const updateMeal = useCallback(async (mealId: number, data: CreateMealRequest) => {
+  const updateMeal = useCallback(async (dietId: number, mealId: number, data: CreateMealRequest) => {
     setUpdating(true)
     setError(null)
 
     try {
-      await dietService.updateMeal(mealId, data)
-      setMeals((prev) => prev.map((meal) => (meal.id === mealId ? { ...meal, ...data } : meal)))
+      await dietService.updateMeal(dietId, mealId, data)
+      setMeals((prev) =>
+        prev.map((meal) =>
+          meal.id === mealId
+            ? {
+                ...meal,
+                name: data.name,
+                type: data.type,
+                scheduledTime: toApiTimeSpan(data.scheduledTime),
+                instructions: data.instructions,
+                // Keep existing foods array to avoid type conflicts
+              }
+            : meal,
+        ),
+      )
       toast.success("Refeição atualizada com sucesso!")
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Erro ao atualizar refeição"
@@ -244,12 +300,12 @@ export function useDietMeals() {
     }
   }, [])
 
-  const deleteMeal = useCallback(async (mealId: number) => {
+  const deleteMeal = useCallback(async (dietId: number, mealId: number) => {
     setDeleting(true)
     setError(null)
 
     try {
-      await dietService.deleteMeal(mealId)
+      await dietService.deleteMeal(dietId, mealId)
       setMeals((prev) => prev.filter((meal) => meal.id !== mealId))
       toast.success("Refeição excluída com sucesso!")
     } catch (err) {

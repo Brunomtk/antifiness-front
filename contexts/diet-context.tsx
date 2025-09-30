@@ -8,14 +8,36 @@ import {
   type Food,
   type DietProgress,
   type DietTemplate,
-  type DietStats,
-  type DietAnalytics,
+  type ApiDietStats,
   type DietFilters,
-  type FoodFilters,
   DietStatus,
   MealType,
   FoodCategory,
 } from "@/types/diet"
+import type { FoodFilters } from "@/types/food"
+
+interface DietAnalytics {
+  totalCaloriesConsumed: number
+  averageDailyCalories: number
+  macroDistribution: {
+    carbs: number
+    protein: number
+    fat: number
+  }
+  adherenceRate: number
+  weightProgress: {
+    startWeight: number
+    currentWeight: number
+    weightLoss: number
+  }
+  mealCompletionRate: number
+  weeklyProgress: {
+    week: string
+    calories: number
+    weight: number
+    adherence: number
+  }[]
+}
 
 interface DietState {
   // Diets
@@ -36,7 +58,7 @@ interface DietState {
   templates: DietTemplate[]
 
   // Stats
-  stats: DietStats | null
+  stats: ApiDietStats | null
 
   // Filters
   dietFilters: DietFilters
@@ -78,7 +100,7 @@ type DietAction =
   | { type: "ADD_PROGRESS"; payload: DietProgress }
   | { type: "SET_ANALYTICS"; payload: DietAnalytics }
   | { type: "SET_TEMPLATES"; payload: DietTemplate[] }
-  | { type: "SET_STATS"; payload: DietStats }
+  | { type: "SET_STATS"; payload: ApiDietStats }
   | { type: "SET_DIET_FILTERS"; payload: DietFilters }
   | { type: "SET_FOOD_FILTERS"; payload: FoodFilters }
   | { type: "COMPLETE_MEAL"; payload: string }

@@ -91,7 +91,7 @@ export default function UsersPage() {
     if (userState.currentUser?.empresaId) {
       setNewUser((prev) => ({
         ...prev,
-        empresaId: userState.currentUser.empresaId,
+        empresaId: (userState.currentUser?.empresaId ?? undefined),
       }))
     }
   }, [userState.currentUser])
@@ -125,11 +125,11 @@ export default function UsersPage() {
         status: newUser.status,
         phone: newUser.phone,
         avatar: newUser.avatar || "string",
-        clientId: newUser.clientId || null,
+        clientId: (newUser.clientId ?? undefined),
         empresaId: userState.currentUser?.empresaId || 1,
       }
 
-      await createUser(userData)
+      await createUser({ ...userData, clientId: (userData as any).clientId ?? undefined })
       setNewUser({
         name: "",
         username: "",
@@ -160,7 +160,7 @@ export default function UsersPage() {
         status: selectedUser.statusEnum,
         phone: selectedUser.phone,
         avatar: selectedUser.avatar,
-        clientId: selectedUser.clientId,
+        clientId: (selectedUser.clientId ?? undefined),
         empresaId: selectedUser.empresaId,
       })
       setIsEditDialogOpen(false)

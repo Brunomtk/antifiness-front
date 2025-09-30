@@ -52,7 +52,7 @@ export function useNotifications() {
 
   const recentNotifications = notifications
     .filter((n) => {
-      const hoursDiff = (Date.now() - n.createdAt.getTime()) / (1000 * 60 * 60)
+      const hoursDiff = (Date.now() - new Date(n.createdAt).getTime()) / (1000 * 60 * 60)
       return hoursDiff <= 24
     })
     .slice(0, 5)
@@ -158,12 +158,12 @@ export function useNotificationFilters() {
   }
 
   const filterByType = async (type: NotificationType) => {
-    const newFilters = { ...filters, type: [type] }
+    const newFilters = { ...filters, type }
     await applyFilters(newFilters)
   }
 
   const filterByCategory = async (category: NotificationCategory) => {
-    const newFilters = { ...filters, category: [category] }
+    const newFilters = { ...filters, category }
     await applyFilters(newFilters)
   }
 
@@ -205,7 +205,7 @@ export function useNotificationOperations() {
 
   const createDietReminder = async (userId: string, mealType: string, time: string) => {
     const data: CreateNotificationData = {
-      userId,
+      userId: Number.parseInt(userId, 10),
       type: NotificationType.REMINDER,
       category: NotificationCategory.REMINDER,
       title: `Hora da ${mealType}`,
@@ -215,7 +215,7 @@ export function useNotificationOperations() {
       actionLabel: "Ver Dieta",
       data: {
         entityType: "meal",
-        metadata: { mealType, time },
+        metadata: JSON.stringify({ mealType, time }),
       },
     }
 
@@ -224,7 +224,7 @@ export function useNotificationOperations() {
 
   const createWorkoutReminder = async (userId: string, workoutName: string) => {
     const data: CreateNotificationData = {
-      userId,
+      userId: Number.parseInt(userId, 10),
       type: NotificationType.REMINDER,
       category: NotificationCategory.INFO,
       title: "Hora do Treino! 💪",
@@ -234,7 +234,7 @@ export function useNotificationOperations() {
       actionLabel: "Iniciar Treino",
       data: {
         entityType: "workout",
-        metadata: { workoutName },
+        metadata: JSON.stringify({ workoutName }),
       },
     }
 
@@ -243,7 +243,7 @@ export function useNotificationOperations() {
 
   const createAchievementNotification = async (userId: string, achievement: string) => {
     const data: CreateNotificationData = {
-      userId,
+      userId: Number.parseInt(userId, 10),
       type: NotificationType.ACHIEVEMENT,
       category: NotificationCategory.SUCCESS,
       title: "Nova Conquista! 🎉",
@@ -251,7 +251,7 @@ export function useNotificationOperations() {
       priority: NotificationPriority.HIGH,
       data: {
         entityType: "achievement",
-        metadata: { achievement },
+        metadata: JSON.stringify({ achievement }),
       },
     }
 
@@ -260,7 +260,7 @@ export function useNotificationOperations() {
 
   const createSystemAlert = async (userId: string, title: string, message: string) => {
     const data: CreateNotificationData = {
-      userId,
+      userId: Number.parseInt(userId, 10),
       type: NotificationType.SYSTEM,
       category: NotificationCategory.INFO,
       title,
@@ -316,7 +316,7 @@ export function useRealTimeNotifications() {
         const randomNotification = notifications[Math.floor(Math.random() * notifications.length)]
 
         createNotification({
-          userId: "user1",
+          userId: Number.parseInt("user1", 10) || 1,
           ...randomNotification,
           priority: NotificationPriority.NORMAL,
         })

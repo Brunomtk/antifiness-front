@@ -83,8 +83,9 @@ export default function ProfilePage() {
 
       if (userData.empresaId) {
         try {
-          const companies = await CompanyService.getCompanies()
-          const company = companies.find((c) => c.id === userData.empresaId)
+          const response = await CompanyService.getCompanies()
+          const companyList: any[] = Array.isArray(response) ? response : (response?.result ?? [])
+          const company = companyList.find((c: any) => c?.id === userData.empresaId)
           setCompanyName(company?.name || `Empresa ${userData.empresaId}`)
         } catch (err) {
           setCompanyName(`Empresa ${userData.empresaId}`)

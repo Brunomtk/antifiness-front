@@ -106,13 +106,25 @@ export default function CRMPage() {
 
   // Carregar clientes ao montar o componente
   useEffect(() => {
+    console.log("[v0] CRM Page mounted, fetching clients...")
     fetchClients()
   }, [fetchClients])
+
+  useEffect(() => {
+    console.log("[v0] Clients updated in CRM:", clients)
+    console.log("[v0] Loading state:", loading)
+    console.log("[v0] Error state:", error)
+  }, [clients, loading, error])
 
   // Agrupar clientes por estágio
   const clientsByStage = CRM_STAGES.reduce(
     (acc, stage) => {
-      acc[stage.id] = clients.filter((client) => client.kanbanStage === stage.id)
+      const stageClients = clients.filter((client) => {
+        console.log("[v0] Client kanbanStage:", client.kanbanStage, "Stage ID:", stage.id)
+        return client.kanbanStage === stage.id
+      })
+      acc[stage.id] = stageClients
+      console.log("[v0] Stage", stage.name, "has", stageClients.length, "clients")
       return acc
     },
     {} as Record<KanbanStage, Client[]>,
@@ -124,8 +136,8 @@ export default function CRMPage() {
       const stage = Number.parseInt(stageId) as KanbanStage
       acc[stage] = clientsByStage[stage].filter(
         (client) =>
-          client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          client.email.toLowerCase().includes(searchTerm.toLowerCase()),
+          (client.name ?? "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (client.email ?? "").toLowerCase().includes(searchTerm.toLowerCase()),
       )
       return acc
     },
@@ -352,11 +364,12 @@ export default function CRMPage() {
 
                       {/* Informações adicionais */}
                       <div className="mt-3 space-y-2">
-                        {client.goals.length > 0 && (
+                        {(Array.isArray((client as any).goals) ? (client as any).goals.length : 0) > 0 && (
                           <div className="flex items-center gap-1 text-xs">
                             <Target className="h-3 w-3 text-primary" />
                             <span className="text-muted-foreground">
-                              {client.goals.length} objetivo{client.goals.length > 1 ? "s" : ""}
+                              {Array.isArray((client as any).goals) ? (client as any).goals.length : 0} objetivo
+                              {(Array.isArray((client as any).goals) ? (client as any).goals.length : 0) > 1 ? "s" : ""}
                             </span>
                           </div>
                         )}
@@ -450,13 +463,19 @@ export default function CRMPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm font-medium">Estágio Atual</Label>
-                  <Badge className="mt-1">{getKanbanStageLabel(selectedClient.kanbanStage)}</Badge>
+                  <Badge className="mt-1">{getKanbanStageLabel((selectedClient as any)?.kanbanStage ?? 0)}</Badge>
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Objetivos</Label>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {selectedClient.goals.length} objetivo{selectedClient.goals.length > 1 ? "s" : ""} definido
-                    {selectedClient.goals.length > 1 ? "s" : ""}
+                    {Array.isArray((selectedClient as any).goals) ? (selectedClient as any).goals.length : 0} objetivo
+                    {(Array.isArray((selectedClient as any).goals) ? (selectedClient as any).goals.length : 0) > 1
+                      ? "s"
+                      : ""}{" "}
+                    definido
+                    {(Array.isArray((selectedClient as any).goals) ? (selectedClient as any).goals.length : 0) > 1
+                      ? "s"
+                      : ""}
                   </p>
                 </div>
               </div>
@@ -492,10 +511,10 @@ export default function CRMPage() {
               <div>
                 <Label className="text-sm font-medium">Mover para Estágio</Label>
                 <Select
-                  value={selectedClient.kanbanStage.toString()}
+                  value={((selectedClient as any)?.kanbanStage ?? 0).toString()}
                   onValueChange={(value) => {
                     const newStage = Number.parseInt(value) as KanbanStage
-                    moveClient(selectedClient.id, newStage)
+                    selectedClient?.id != null && moveClient(selectedClient.id, newStage)
                     setSelectedClient({ ...selectedClient, kanbanStage: newStage })
                   }}
                 >
