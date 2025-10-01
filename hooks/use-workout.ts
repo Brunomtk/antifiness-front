@@ -9,7 +9,6 @@ import type {
   WorkoutProgress,
   WorkoutStats,
   WorkoutsQuery as WorkoutFilters,
-  WorkoutsPage as WorkoutListResponse,
 } from "@/types/workout"
 
 interface UseWorkoutListState {
@@ -81,18 +80,26 @@ export function useWorkoutList(initialFilters: WorkoutFilters = {}): UseWorkoutL
     }))
 
     try {
-      const response: WorkoutListResponse = await workoutService.getPaged(state.filters)
+      const response = await workoutService.getPaged(state.filters)
+      const list = (response as any).items ?? (response as any).workouts ?? []
+      const totalPages =
+        (response as any).totalPages ??
+        ((response as any).total && (response as any).pageSize
+          ? Math.max(1, Math.ceil((response as any).total / (response as any).pageSize))
+          : 1)
+      const totalCount =
+        (response as any).totalCount ?? (response as any).total ?? (Array.isArray(list) ? list.length : 0)
 
       setState((prev) => ({
         ...prev,
-        workouts: response.workouts || [],
+        workouts: list || [],
         pagination: {
           page: response.page || 1,
           pageSize: response.pageSize || 10,
-          totalCount: response.totalCount || 0,
-          totalPages: response.totalPages || 0,
-          hasNextPage: response.hasNextPage || false,
-          hasPreviousPage: response.hasPreviousPage || false,
+          totalCount: totalCount || 0,
+          totalPages: totalPages || 0,
+          hasNextPage: Boolean((response as any).hasNextPage ?? ((response as any).page ?? 1) < totalPages),
+          hasPreviousPage: Boolean((response as any).hasPreviousPage ?? ((response as any).page ?? 1) > 1),
         },
         loading: { ...prev.loading, workouts: false },
       }))
@@ -348,7 +355,8 @@ export function useWorkoutTemplates(filters: WorkoutFilters = {}) {
 
     try {
       const response = await workoutService.getTemplates(filters)
-      setTemplates(response.workouts || [])
+      const list = (response as any).items ?? (response as any).workouts ?? []
+      setTemplates(list || [])
     } catch (error) {
       setError(error instanceof Error ? error.message : "Erro ao carregar templates")
     } finally {

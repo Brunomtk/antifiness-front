@@ -24,8 +24,9 @@ export default function WorkoutsPage() {
     try {
       setLoading(true)
       const res = await workoutService.getPaged({ page, pageSize: 10, search, ...filters })
-      setItems(res.workouts || [])
-      setTotalPages(res.totalPages || 1)
+      const list = (res as any).items ?? (res as any).workouts ?? []
+      setItems(list)
+      setTotalPages(((res as any).totalPages) ?? ((((res as any).total) && 10) ? Math.max(1, Math.ceil((res as any).total / 10)) : 1))
     } catch (err: any) {
       const msg = err?.response?.data || err?.message || "Erro ao carregar treinos"
       toast({ title: "Falha", description: String(msg) })

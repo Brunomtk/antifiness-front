@@ -52,9 +52,9 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-        <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-72x72.jpg" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-72x72.jpg" />
-        <link rel="shortcut icon" href="/icons/icon-72x72.jpg" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon.ico" />
+        <link rel="shortcut icon" href="/favicon.ico" />
 
         <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
         <meta httpEquiv="Pragma" content="no-cache" />

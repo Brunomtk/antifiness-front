@@ -27,12 +27,15 @@ import {
   Tag,
   FileText,
   Users,
+  Play,
 } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import type { Workout, WorkoutExercise } from "@/types/workout"
 import { workoutService } from "@/services/workout-service"
 import ExercisesPicker from "./ExercisesPicker"
 import { useClients } from "@/hooks/use-client"
+import { exerciseService } from "@/services/exercise-service"
+import { ExerciseVideoModal } from "./ExerciseVideoModal"
 
 type Props = { mode: "create" | "edit"; initial?: Workout | null; workoutId?: number }
 
@@ -72,7 +75,6 @@ export default function WorkoutForm({ mode, initial, workoutId }: Props) {
     if (clients.length === 0) fetchClients()
   }, [])
 
-  // Auto preencher Empresa (ID) do usuário logado e buscar nome da empresa
   React.useEffect(() => {
     const loadEmpresa = async () => {
       try {
@@ -106,6 +108,33 @@ export default function WorkoutForm({ mode, initial, workoutId }: Props) {
   }, [clientId, clients])
 
   const [pickerOpen, setPickerOpen] = React.useState(false)
+  const [isVideoOpen, setIsVideoOpen] = React.useState(false)
+  const [selectedExerciseId, setSelectedExerciseId] = React.useState<number | null>(null)
+
+  React.useEffect(() => {
+    const fetchExerciseNames = async () => {
+      const exercisesWithoutNames = exercises.filter((e) => !e.exerciseName && e.exerciseId)
+
+      if (exercisesWithoutNames.length === 0) return
+
+      try {
+        const promises = exercisesWithoutNames.map((e) => exerciseService.getById(e.exerciseId).catch(() => null))
+        const results = await Promise.all(promises)
+
+        setExercises((prev) =>
+          prev.map((e) => {
+            if (e.exerciseName) return e
+            const exerciseData = results.find((r) => r?.id === e.exerciseId)
+            return exerciseData ? { ...e, exerciseName: exerciseData.name } : e
+          }),
+        )
+      } catch (err) {
+        console.error("Failed to fetch exercise names:", err)
+      }
+    }
+
+    fetchExerciseNames()
+  }, [exercises.length])
 
   const addExercise = (ex: { id: number; name: string }) => {
     const nextOrder = (exercises[exercises.length - 1]?.order || exercises.length) + 1
@@ -137,6 +166,11 @@ export default function WorkoutForm({ mode, initial, workoutId }: Props) {
 
   const remove = (index: number) => {
     setExercises((arr) => arr.filter((_, i) => i !== index).map((e, i) => ({ ...e, order: i + 1 })))
+  }
+
+  const handlePlayVideo = (exerciseId: number) => {
+    setSelectedExerciseId(exerciseId)
+    setIsVideoOpen(true)
   }
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -176,7 +210,7 @@ export default function WorkoutForm({ mode, initial, workoutId }: Props) {
         toast({ title: "Treino criado", description: `#${created.id} • ${created.name}` })
         router.push(`/admin/workouts/${created.id}`)
       } else if (mode === "edit" && workoutId) {
-        const updated = await workoutService.update(workoutId, payload as any)
+        const updated = await workoutService.updateSafe(workoutId, payload as any)
         toast({ title: "Treino atualizado", description: `#${updated.id}` })
       }
     } catch (err: any) {
@@ -211,7 +245,6 @@ export default function WorkoutForm({ mode, initial, workoutId }: Props) {
 
       <form onSubmit={onSubmit} className="space-y-6">
         <div className="grid gap-6">
-          {/* Basic Information Card */}
           <Card className="border-l-4 border-l-blue-500">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -245,7 +278,6 @@ export default function WorkoutForm({ mode, initial, workoutId }: Props) {
             </CardContent>
           </Card>
 
-          {/* Workout Configuration Card */}
           <Card className="border-l-4 border-l-green-500">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -307,7 +339,6 @@ export default function WorkoutForm({ mode, initial, workoutId }: Props) {
             </CardContent>
           </Card>
 
-          {/* Client and Template Configuration Card */}
           <Card className="border-l-4 border-l-purple-500">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -397,7 +428,19 @@ export default function WorkoutForm({ mode, initial, workoutId }: Props) {
                       <TableRow key={`wx-${idx}`} className="hover:bg-gray-50">
                         <TableCell className="font-medium">{idx + 1}</TableCell>
                         <TableCell className="font-medium text-orange-700">
-                          {e.exerciseName || `#${e.exerciseId}`}
+                          <div className="flex items-center gap-2">
+                            <span>{e.exerciseName || `Exercício #${e.exerciseId}`}</span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 text-blue-600 hover:bg-blue-50"
+                              onClick={() => handlePlayVideo(e.exerciseId)}
+                              title="Ver vídeo do exercício"
+                            >
+                              <Play className="h-3 w-3" />
+                            </Button>
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Input
@@ -503,8 +546,9 @@ export default function WorkoutForm({ mode, initial, workoutId }: Props) {
         </div>
       </form>
 
-      {/* Picker */}
       <ExercisesPicker open={pickerOpen} onOpenChange={setPickerOpen} onSelect={addExercise} />
+
+      <ExerciseVideoModal isOpen={isVideoOpen} onOpenChange={setIsVideoOpen} exerciseId={selectedExerciseId} />
     </div>
   )
 }

@@ -191,7 +191,7 @@ function courseReducer(state: CourseState, action: CourseAction): CourseState {
     case "DELETE_LESSON":
       return {
         ...state,
-        lessons: state.lessons.filter((lesson) => lesson.id !== action.payload),
+        lessons: state.lessons.filter((lesson) => lesson.id !== Number(action.payload)),
       }
     case "ADD_ENROLLMENT":
       return { ...state, enrollments: [...state.enrollments, action.payload] }

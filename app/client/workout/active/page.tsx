@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { ArrowLeft, Play, AlertCircle } from "lucide-react"
+import { ArrowLeft, AlertCircle } from "lucide-react"
 import { useClientWorkout } from "@/hooks/use-client-workout"
 import { useWorkoutTimer } from "@/hooks/use-workout-timer"
 import { WorkoutTimer } from "@/components/workout/WorkoutTimer"
@@ -15,6 +14,7 @@ import { ExerciseCard } from "@/components/workout/ExerciseCard"
 import { WorkoutCompletion } from "@/components/workout/WorkoutCompletion"
 import { useMobile } from "@/hooks/use-mobile"
 import { WorkoutHistory } from "@/components/workout/WorkoutHistory"
+import { ExerciseVideoModal } from "@/components/workout/ExerciseVideoModal"
 
 export default function ActiveWorkoutPage() {
   const router = useRouter()
@@ -140,7 +140,7 @@ export default function ActiveWorkoutPage() {
     // Update via API
     if (currentWorkout) {
       // Live save disabled by default due to backend EF duplicate tracking with duplicated exerciseId.
-      if (process.env.NEXT_PUBLIC_WORKOUT_LIVE_SAVE === 'true') {
+      if (process.env.NEXT_PUBLIC_WORKOUT_LIVE_SAVE === "true") {
         await updateExerciseCompletion(
           currentWorkout.id,
           exerciseId,
@@ -206,10 +206,12 @@ export default function ActiveWorkoutPage() {
       exerciseProgress: currentWorkout.exercises?.map((exercise) => ({
         exerciseId: exercise.exerciseId,
         exerciseName: exercise.exerciseName,
-        completedSets: exerciseStates[exercise.id ?? exercise.exerciseId]?.completedSets || 0,
-        completedReps: exercise.reps * (exerciseStates[exercise.id ?? exercise.exerciseId]?.completedSets || 0),
+        completedSets: Number(exerciseStates[exercise.id ?? exercise.exerciseId]?.completedSets) || 0,
+        completedReps: Number(
+          exercise.reps * (Number(exerciseStates[exercise.id ?? exercise.exerciseId]?.completedSets) || 0),
+        ),
         weight: exercise.weight,
-        isCompleted: exerciseStates[exercise.id ?? exercise.exerciseId]?.isCompleted || false,
+        isCompleted: Boolean(exerciseStates[exercise.id ?? exercise.exerciseId]?.isCompleted) || false,
       })),
       notes: data.notes,
     }
@@ -398,20 +400,7 @@ export default function ActiveWorkoutPage() {
         )}
 
         {/* Video Dialog */}
-        <Dialog open={isVideoOpen} onOpenChange={setIsVideoOpen}>
-          <DialogContent className="sm:max-w-[600px] mx-4">
-            <DialogHeader>
-              <DialogTitle>Vídeo do Exercício</DialogTitle>
-              <DialogDescription>Assista ao vídeo demonstrativo do exercício.</DialogDescription>
-            </DialogHeader>
-            <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
-              <div className="text-center">
-                <Play className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-500">Vídeo não disponível</p>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <ExerciseVideoModal isOpen={isVideoOpen} onOpenChange={setIsVideoOpen} exerciseId={selectedExercise} />
 
         {/* Workout Completion Dialog */}
         <WorkoutCompletion

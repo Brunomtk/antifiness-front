@@ -89,9 +89,8 @@ export function useClients() {
               1,
               Math.ceil((response.totalRecords ?? response.rowCount ?? clients.length) / (response.pageSize || 20)),
             ),
-          hasPreviousPage: response.hasPreviousPage ?? (response.currentPage || 1) > 1,
-          hasNextPage:
-            response.hasNextPage ?? (response.totalPages ?? response.pageCount ?? 1) > (response.currentPage || 1),
+          hasPreviousPage: Boolean((response.hasPreviousPage) ?? ((response.currentPage ?? 1) > 1)),
+          hasNextPage: Boolean((response.hasNextPage) ?? ((response.totalPages ?? response.pageCount ?? 1) > (response.currentPage ?? 1))),
         }
 
         console.log("[v0] Mapped response:", mapped)

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { api } from "@/lib/api"
+import { exerciseService } from "@/services/exercise-service"
 import type { Workout, WorkoutProgress, WorkoutStats } from "@/types/workout"
 
 interface UseClientWorkoutState {
@@ -142,10 +143,32 @@ export function useClientWorkout(): UseClientWorkoutReturn {
 
     try {
       const response = await api.get(`/Workout/${id}`)
+      const workout = response.data
+
+      if (workout.exercises && workout.exercises.length > 0) {
+        const exercisesWithNames = await Promise.all(
+          workout.exercises.map(async (exercise: any) => {
+            try {
+              const exerciseDetails = await exerciseService.getById(exercise.exerciseId)
+              return {
+                ...exercise,
+                exerciseName: exerciseDetails.name,
+              }
+            } catch (error) {
+              console.warn(`Failed to fetch exercise name for ID ${exercise.exerciseId}:`, error)
+              return {
+                ...exercise,
+                exerciseName: `Exercício ${exercise.exerciseId}`,
+              }
+            }
+          }),
+        )
+        workout.exercises = exercisesWithNames
+      }
 
       setState((prev) => ({
         ...prev,
-        currentWorkout: response.data,
+        currentWorkout: workout,
         loading: { ...prev.loading, workout: false },
       }))
     } catch (error) {
@@ -301,15 +324,15 @@ export function useClientWorkout(): UseClientWorkoutReturn {
       }))
 
       try {
-        const user = await getCurrentUser();
-        const progressPayload: any = { ...data };
+        const user = await getCurrentUser()
+        const progressPayload: any = { ...data }
         if (user?.clientId != null) {
-          progressPayload.clientId = Number(user.clientId);
+          progressPayload.clientId = Number(user.clientId)
         } else {
-          delete progressPayload.clientId;
+          delete progressPayload.clientId
         }
         // remove undefined/nulls to satisfy strict model binding
-        Object.keys(progressPayload).forEach((k) => (progressPayload[k] == null ? delete progressPayload[k] : null));
+        Object.keys(progressPayload).forEach((k) => (progressPayload[k] == null ? delete progressPayload[k] : null))
         await api.post(`/Workout/${workoutId}/progress`, progressPayload)
 
         // Recarregar progresso e histórico após salvar
@@ -351,7 +374,7 @@ export function useClientWorkout(): UseClientWorkoutReturn {
 
         // Atualizar o exercício específico
         const updatedExercises = workout.exercises.map((ex: any) => {
-          const matches = (ex.id && ex.id === exerciseId) || ex.exerciseId === exerciseId;
+          const matches = (ex.id && ex.id === exerciseId) || ex.exerciseId === exerciseId
           if (matches) {
             return {
               ...ex,
@@ -363,12 +386,12 @@ export function useClientWorkout(): UseClientWorkoutReturn {
         })
 
         // Atualizar o workout
-        const user = await getCurrentUser();
+        const user = await getCurrentUser()
         const sanitized = {
           id: workout.id,
           clientId: user?.clientId != null ? Number(user.clientId) : undefined,
           name: workout.name,
-          description: workout.description ?? '',
+          description: workout.description ?? "",
           isTemplate: workout.isTemplate ?? false,
           exercises: updatedExercises.map((ex: any) => ({
             id: ex.id,
@@ -382,9 +405,9 @@ export function useClientWorkout(): UseClientWorkoutReturn {
             isCompleted: !!ex.isCompleted,
             completedSets: ex.completedSets ?? 0,
           })),
-        } as any;
+        } as any
         // drop undefined fields (clientId, optional)
-        Object.keys(sanitized).forEach((k) => (sanitized[k] == null ? delete sanitized[k] : null));
+        Object.keys(sanitized).forEach((k) => (sanitized[k] == null ? delete sanitized[k] : null))
         await api.put(`/Workout/${workoutId}`, { request: sanitized })
 
         // Recarregar o workout

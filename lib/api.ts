@@ -1,38 +1,34 @@
-import axios from "axios"
+import axios, { AxiosError } from "axios"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://68.183.154.14:5000/api"
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  timeout: 15000,
+  headers: { "Content-Type": "application/json" },
 })
 
-// Interceptor para adicionar token de autenticação
-api.interceptors.request.use(
-  (config) => {
+// Request: add token only in browser
+api.interceptors.request.use((config) => {
+  if (typeof window !== "undefined") {
     const token = localStorage.getItem("token")
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
-    return config
-  },
-  (error) => {
-    return Promise.reject(error)
-  },
-)
+    if (token) config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
 
-// Interceptor para tratar respostas
+// Response: handle 401 only in browser
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("token")
-      localStorage.removeItem("user")
+  (error: AxiosError) => {
+    const status = (error.response?.status ?? 0) as number
+    if (typeof window !== "undefined" && status === 401) {
+      try {
+        localStorage.removeItem("token")
+        localStorage.removeItem("user")
+      } catch {}
       window.location.href = "/login"
     }
     return Promise.reject(error)
-  },
+  }
 )
